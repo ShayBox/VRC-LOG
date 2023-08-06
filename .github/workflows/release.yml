@@ -1,0 +1,34 @@
+on:
+  release:
+    types: [created]
+
+jobs:
+  release:
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Windows
+            target: i686-pc-windows-msvc
+            runner: windows-latest
+
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Fetch Repository
+        uses: actions/checkout@v3
+
+      - name: Update Rust Toolchain
+        run: rustup update stable
+
+      - name: Add Rust Target
+        run: rustup target add ${{ matrix.target }}
+
+      - name: Build Release Binary
+        run: cargo build --release --target ${{ matrix.target }}
+
+      - name: Upload Release Binary (Windows)
+        run: gh release upload ${{ github.ref_name }} ./target/${{ matrix.target }}/release/vrc-log.exe --clobber
