@@ -4,12 +4,6 @@ pub mod prelude;
 pub mod ravenwood;
 pub mod sqlite;
 
-pub const USER_AGENT: &str = concat!(
-    "VRC-LOG/",
-    env!("CARGO_PKG_VERSION"),
-    " shaybox@shaybox.com"
-);
-
 pub trait Provider {
     fn send_avatar_id(&self, avatar_id: &str) -> anyhow::Result<bool>;
 }

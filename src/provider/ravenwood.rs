@@ -9,10 +9,15 @@ use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::provider::{Provider, USER_AGENT};
+use crate::provider::Provider;
 
 const CLIENT_ID: u64 = 1137885877918502923;
 const USER_ID: &str = "358558305997684739";
+const USER_AGENT: &str = concat!(
+    "VRC-LOG/",
+    env!("CARGO_PKG_VERSION"),
+    " shaybox@shaybox.com"
+);
 
 #[derive(Deserialize, Serialize)]
 pub struct RavenwoodResponse {
@@ -43,6 +48,7 @@ impl Default for Ravenwood {
             if let Some(event) = ctx.event.as_object() {
                 if let Some(user) = event.get("user").and_then(Value::as_object) {
                     if let Some(id) = user.get("id").and_then(Value::as_str) {
+                        println!("[Ravenwood] Got your Discord ID: {id}");
                         *discord_id_rpc.write().unwrap() = id.to_owned();
                     }
                 }

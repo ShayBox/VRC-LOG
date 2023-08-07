@@ -599,7 +599,7 @@ dependencies = [
 [[package]]
 name = "notify"
 version = "6.0.1"
-source = "git+https://github.com/notify-rs/notify.git#5f40b83c04b04893a42f91b55e4ceeef3777d47c"
+source = "git+https://github.com/notify-rs/notify.git#cd53ad6128af4e0a72210b64247b7c650687150c"
 dependencies = [
  "bitflags 2.3.3",
  "crossbeam-channel",
@@ -1245,7 +1245,7 @@ checksum = "accd4ea62f7bb7a82fe23066fb0957d48ef677f6eeb8215f372f52e48bb32426"
 
 [[package]]
 name = "vrc-log"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "anyhow",
  "discord-presence",
