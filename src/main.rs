@@ -26,7 +26,7 @@ fn main() -> anyhow::Result<()> {
 
         avatar_ids
             .iter()
-            .filter(|avatar_id| !cache.send_avatar_id(avatar_id).unwrap())
+            .filter(|avatar_id| cache.send_avatar_id(avatar_id).unwrap_or(false))
             .for_each(|avatar_id| {
                 println!("vrcx://avatar/{avatar_id}");
                 let _ = providers
