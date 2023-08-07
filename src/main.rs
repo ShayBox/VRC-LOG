@@ -24,18 +24,14 @@ fn main() -> anyhow::Result<()> {
             continue;
         };
 
-        for avatar_id in avatar_ids {
-            if !cache.send_avatar_id(&avatar_id)? {
-                continue;
-            };
-
-            println!("vrcx://avatar/{avatar_id}");
-
-            for (name, provider) in &providers {
-                if provider.send_avatar_id(&avatar_id)? {
-                    println!("^ Successfully Submitted to {name} ^");
-                };
-            }
-        }
+        avatar_ids
+            .iter()
+            .filter(|avatar_id| !cache.send_avatar_id(avatar_id).unwrap())
+            .for_each(|avatar_id| {
+                println!("vrcx://avatar/{avatar_id}");
+                let _ = providers
+                    .iter()
+                    .map(|(avatar_id, provider)| provider.send_avatar_id(avatar_id));
+            });
     }
 }

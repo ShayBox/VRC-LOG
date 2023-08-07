@@ -1,6 +1,6 @@
 [package]
 name = "vrc-log"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Shayne Hartford <shaybox@shaybox.com>"]
 edition = "2021"
 description = "VRChat Local Cache Avatar ID Logger"
@@ -12,6 +12,7 @@ license = "MIT"
 
 [dependencies]
 anyhow = "1"
+discord-presence = "0.5"
 lazy_static = "1"
 notify = { git = "https://github.com/notify-rs/notify.git", version = "6" }
 regex = "1"
