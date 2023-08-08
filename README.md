@@ -17,10 +17,10 @@ I created this as an extensible alternative to [Ravenwood-AvatarLogger]
 This project does **NOT** rip or steal avatars, it just scans your local cache for avatar ids and sends them to avatar database providers
 
 ### Supported Providers:
-- [Ravenwood]
-- ~~[VRCDB]~~ - There's no way to submit avatars
-- ~~[Just H Party]~~ - There's no way to submit avatars
-- ~~[Prismic's Avatar Search]~~ - There's no way to submit avatars
+- [Ravenwood] (Web & VRCX)
+- [VRCDB] (World) - Uses the Ravenwood database
+- ~~[Just H Party]~~ (Web & VRCX) - There's no way to submit avatars
+- ~~[Prismic's Avatar Search]~~ (World) - There's no way to submit avatars
 
 Additional providers are welcome, please open an issue, pull request, or join Discord
 
