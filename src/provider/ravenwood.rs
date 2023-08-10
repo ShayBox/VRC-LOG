@@ -27,12 +27,18 @@ pub struct RavenwoodResponse {
 #[derive(Deserialize, Serialize)]
 pub struct Status {
     message: String,
-    status: i64,
+    status:  i64,
 }
 
 pub struct Ravenwood {
-    client: Client,
+    client:     Client,
     discord_id: Arc<RwLock<String>>,
+}
+
+impl Ravenwood {
+    pub fn new(client: Client, discord_id: Arc<RwLock<String>>) -> Self {
+        Self { client, discord_id }
+    }
 }
 
 impl Default for Ravenwood {
@@ -62,7 +68,7 @@ impl Default for Ravenwood {
             println!("[Ravenwood] Defaulting to the ID of the developer of this program, ShayBox");
         }
 
-        Self { client, discord_id }
+        Self::new(client, discord_id)
     }
 }
 

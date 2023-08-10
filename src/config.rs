@@ -2,7 +2,6 @@ use std::{
     fs::File,
     io::{Error, Read, Seek},
     path::PathBuf,
-    str,
 };
 
 use lazy_static::lazy_static;
