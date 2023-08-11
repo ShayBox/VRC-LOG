@@ -7,17 +7,19 @@ use vrc_log::{
     provider::{prelude::*, Provider, Providers},
 };
 
-const COLORS: [Color; 10] = [
+const COLORS: [Color; 12] = [
     Color::Red,
+    Color::BrightRed,
     Color::Yellow,
     Color::BrightYellow,
     Color::Green,
     Color::BrightGreen,
+    Color::Blue,
+    Color::BrightBlue,
     Color::Cyan,
     Color::BrightCyan,
-    Color::BrightBlue,
-    Color::Blue,
     Color::Magenta,
+    Color::BrightMagenta,
 ];
 
 fn main() -> anyhow::Result<()> {

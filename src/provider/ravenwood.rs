@@ -1,10 +1,7 @@
-use std::{
-    collections::HashMap,
-    sync::{Arc, RwLock},
-    time::Duration,
-};
+use std::{collections::HashMap, sync::Arc, time::Duration};
 
 use discord_presence::Client as DiscordRPC;
+use parking_lot::RwLock;
 use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -31,44 +28,43 @@ pub struct Status {
 }
 
 pub struct Ravenwood {
-    client:     Client,
-    discord_id: Arc<RwLock<String>>,
+    client:  Client,
+    user_id: Arc<RwLock<String>>,
 }
 
 impl Ravenwood {
-    pub fn new(client: Client, discord_id: Arc<RwLock<String>>) -> Self {
-        Self { client, discord_id }
+    pub fn new(client: Client, user_id: Arc<RwLock<String>>) -> Self {
+        Self { client, user_id }
     }
 }
 
 impl Default for Ravenwood {
     fn default() -> Self {
-        println!("[Ravenwood] Attempting to get your Discord ID using RPC");
+        let client = Client::default();
+        let user_id = Arc::new(RwLock::new(String::new()));
+        let user_id_rpc = user_id.clone();
 
-        let client = Client::new();
-        let discord_id = Arc::new(RwLock::new(String::from(USER_ID)));
-        let discord_id_rpc = discord_id.clone();
         let mut discord_rpc = DiscordRPC::new(CLIENT_ID);
         discord_rpc.on_error(|ctx| eprintln!("{ctx:#?}"));
         discord_rpc.on_ready(move |ctx| {
             if let Some(event) = ctx.event.as_object() {
                 if let Some(user) = event.get("user").and_then(Value::as_object) {
                     if let Some(id) = user.get("id").and_then(Value::as_str) {
-                        println!("[Ravenwood] Got your Discord ID: {id}");
-                        *discord_id_rpc.write().unwrap() = id.to_owned();
+                        *user_id_rpc.write() = id.into();
                     }
                 }
             };
         });
         let _ = discord_rpc.start();
-        std::thread::sleep(Duration::from_secs(15));
+        std::thread::sleep(Duration::from_secs(5));
 
-        if *discord_id.read().unwrap() == USER_ID {
+        if *user_id.read() == String::new() {
+            *user_id.write() = USER_ID.into();
             println!("[Ravenwood] Couldn't get your Discord ID, please make sure Discord is open");
             println!("[Ravenwood] Defaulting to the ID of the developer of this program, ShayBox");
         }
 
-        Self::new(client, discord_id)
+        Self::new(client, user_id)
     }
 }
 
@@ -80,7 +76,7 @@ impl Provider for Ravenwood {
             .header("User-Agent", USER_AGENT)
             .json(&HashMap::from([
                 ("id", avatar_id),
-                ("userid", &self.discord_id.read().unwrap()),
+                ("userid", &self.user_id.read()),
             ]))
             .send()?
             .json::<RavenwoodResponse>()?;
