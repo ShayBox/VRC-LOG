@@ -1,26 +1,10 @@
 use std::collections::HashMap;
 
-use colored::{Color, Colorize};
 use vrc_log::{
     config::VRChatConfig,
     provider,
     provider::{prelude::*, Provider, Providers},
 };
-
-const COLORS: [Color; 12] = [
-    Color::Red,
-    Color::BrightRed,
-    Color::Yellow,
-    Color::BrightYellow,
-    Color::Green,
-    Color::BrightGreen,
-    Color::Blue,
-    Color::BrightBlue,
-    Color::Cyan,
-    Color::BrightCyan,
-    Color::Magenta,
-    Color::BrightMagenta,
-];
 
 fn main() -> anyhow::Result<()> {
     let cache = Sqlite::new()?;
@@ -31,7 +15,6 @@ fn main() -> anyhow::Result<()> {
         ("Ravenwood", provider!(Ravenwood::default())),
     ]);
 
-    let mut color_index = 0;
     loop {
         let Ok(path) = receiver.recv() else {
             continue;
@@ -41,18 +24,17 @@ fn main() -> anyhow::Result<()> {
             continue;
         };
 
-        avatar_ids
-            .iter()
-            .filter(|avatar_id| cache.send_avatar_id(avatar_id).unwrap_or(false))
-            .for_each(|avatar_id| {
-                let color = COLORS[color_index];
-                let text = format!("vrcx://avatar/{avatar_id}").color(color);
-                color_index = (color_index + 1) % COLORS.len();
-                println!("{text}");
+        for avatar_id in avatar_ids {
+            if !cache.send_avatar_id(&avatar_id).unwrap_or(true) {
+                continue;
+            }
 
-                let _ = providers
-                    .iter()
-                    .map(|(avatar_id, provider)| provider.send_avatar_id(avatar_id));
-            });
+            vrc_log::print_colorized(&avatar_id);
+            for (name, provider) in &providers {
+                if provider.send_avatar_id(&avatar_id)? {
+                    println!("^ Successfully Submitted to {name} ^");
+                }
+            }
+        }
     }
 }

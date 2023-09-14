@@ -5,8 +5,10 @@ use std::{
     sync::mpsc::Receiver,
 };
 
+use colored::{Color, Colorize};
 use lazy_static::lazy_static;
 use notify::{Config, Event, PollWatcher, RecursiveMode, Watcher};
+use parking_lot::RwLock;
 use regex::{Captures, Regex};
 
 pub mod config;
@@ -67,4 +69,31 @@ pub fn parse_avatar_ids(path: PathBuf) -> Result<Vec<String>, Error> {
         .collect::<Vec<_>>();
 
     Ok(avatar_ids)
+}
+
+pub fn print_colorized(avatar_id: &str) {
+    lazy_static! {
+        static ref INDEX: RwLock<usize> = RwLock::new(0);
+        static ref COLORS: [Color; 12] = [
+            Color::Red,
+            Color::BrightRed,
+            Color::Yellow,
+            Color::BrightYellow,
+            Color::Green,
+            Color::BrightGreen,
+            Color::Blue,
+            Color::BrightBlue,
+            Color::Cyan,
+            Color::BrightCyan,
+            Color::Magenta,
+            Color::BrightMagenta,
+        ];
+    }
+
+    let index = *INDEX.read();
+    let color = COLORS[index];
+    *INDEX.write() = (index + 1) % COLORS.len();
+
+    let text = format!("vrcx://avatar/{avatar_id}").color(color);
+    println!("{text}");
 }
