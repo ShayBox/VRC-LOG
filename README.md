@@ -18,7 +18,7 @@ This project does **NOT** rip or steal avatars, it just scans your local cache f
 
 ### VRCX Support
 This program prints [VRCX] avatar links when a new (to you) avatar is found  
-You can place this program within the [VRCX] Auto-Launch Folder (Settings > Advanced)
+You can place a **shortcut** to this program within the [VRCX] Auto-Launch Folder (Settings > Advanced)
 
 ### Provider Support
 - [Ravenwood] (Web & VRCX)
