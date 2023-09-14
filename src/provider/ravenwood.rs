@@ -45,7 +45,7 @@ impl Default for Ravenwood {
         let user_id_rpc = user_id.clone();
 
         let mut discord_rpc = DiscordRPC::new(CLIENT_ID);
-        discord_rpc.on_error(|ctx| eprintln!("{ctx:#?}"));
+        // discord_rpc.on_error(|ctx| eprintln!("{ctx:#?}")); // discord-presence v0.5.18 constantly emits errors...
         discord_rpc.on_ready(move |ctx| {
             if let Some(event) = ctx.event.as_object() {
                 if let Some(user) = event.get("user").and_then(Value::as_object) {
@@ -55,8 +55,9 @@ impl Default for Ravenwood {
                 }
             };
         });
-        let _ = discord_rpc.start();
+        let thread = discord_rpc.start();
         std::thread::sleep(Duration::from_secs(5));
+        thread.stop().expect("Failed to stop RPC thread");
 
         if *user_id.read() == String::new() {
             *user_id.write() = USER_ID.into();
