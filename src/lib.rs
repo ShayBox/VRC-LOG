@@ -2,10 +2,10 @@ use std::{
     fs::File,
     io::{Error, Read},
     path::{Path, PathBuf},
-    sync::mpsc::Receiver,
 };
 
 use colored::{Color, Colorize};
+use crossbeam::channel::{Receiver, Sender};
 use lazy_static::lazy_static;
 use notify::{Config, Event, PollWatcher, RecursiveMode, Watcher};
 use parking_lot::RwLock;
@@ -14,29 +14,29 @@ use regex::{Captures, Regex};
 pub mod config;
 pub mod provider;
 
-pub fn watch<P: AsRef<Path>>(path: P) -> notify::Result<Receiver<PathBuf>> {
-    let (tx_a, tx_b, rx) = {
-        let (tx, rx) = std::sync::mpsc::channel();
-        (tx.clone(), tx, rx)
-    };
+pub fn watch<P: AsRef<Path>>(path: P) -> notify::Result<(Sender<PathBuf>, Receiver<PathBuf>)> {
+    let (tx_a, rx_a) = crossbeam::channel::unbounded();
+    let (tx_b, tx_c) = (tx_a.clone(), tx_a.clone());
 
     let mut watcher = PollWatcher::with_initial_scan(
         move |watch_event: notify::Result<Event>| {
-            let event = watch_event.unwrap();
-            for path in event.paths {
-                tx_a.send(path).unwrap();
+            if let Ok(event) = watch_event {
+                for path in event.paths {
+                    let _ = tx_c.send(path);
+                }
             }
         },
         Config::default(),
         move |scan_event: notify::Result<PathBuf>| {
-            let path = scan_event.unwrap();
-            tx_b.send(path).unwrap();
+            if let Ok(path) = scan_event {
+                let _ = tx_b.send(path);
+            }
         },
     )?;
 
     watcher.watch(path.as_ref(), RecursiveMode::Recursive)?;
 
-    Ok(rx)
+    Ok((tx_a, rx_a))
 }
 
 pub fn parse_path_env(haystack: &str) -> Result<PathBuf, Error> {

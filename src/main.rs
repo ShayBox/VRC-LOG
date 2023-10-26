@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use anyhow::bail;
 use vrc_log::{
     config::VRChatConfig,
     provider,
@@ -9,17 +10,13 @@ use vrc_log::{
 fn main() -> anyhow::Result<()> {
     let cache = Sqlite::new()?;
     let config = VRChatConfig::load()?;
-    let receiver = vrc_log::watch(config.cache_directory)?;
     let providers: Providers = HashMap::from([
         // ("Sqlite", provider!(Sqlite::new()?)),
         ("Ravenwood", provider!(Ravenwood::default())),
     ]);
 
-    loop {
-        let Ok(path) = receiver.recv() else {
-            continue;
-        };
-
+    let (_tx, rx) = vrc_log::watch(config.cache_directory)?;
+    while let Ok(path) = rx.recv() {
         let Ok(avatar_ids) = vrc_log::parse_avatar_ids(path) else {
             continue;
         };
@@ -37,4 +34,6 @@ fn main() -> anyhow::Result<()> {
             }
         }
     }
+
+    bail!("Channel Closed");
 }

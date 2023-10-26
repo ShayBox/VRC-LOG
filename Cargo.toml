@@ -1,6 +1,6 @@
 [package]
 name = "vrc-log"
-version = "0.3.0"
+version = "0.3.1"
 authors = ["Shayne Hartford <shaybox@shaybox.com>"]
 edition = "2021"
 description = "VRChat Local Cache Avatar ID Logger"
@@ -13,6 +13,7 @@ license = "MIT"
 [dependencies]
 anyhow = "1"
 colored = "2"
+crossbeam = "0.8"
 discord-presence = "0.5"
 lazy_static = "1"
 notify = "6"
