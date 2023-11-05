@@ -15,7 +15,7 @@ fn main() -> anyhow::Result<()> {
         ("Ravenwood", provider!(Ravenwood::default())),
     ]);
 
-    let (_tx, rx) = vrc_log::watch(config.cache_directory)?;
+    let (_tx, rx, _watcher) = vrc_log::watch(config.cache_directory)?;
     while let Ok(path) = rx.recv() {
         let Ok(avatar_ids) = vrc_log::parse_avatar_ids(path) else {
             continue;

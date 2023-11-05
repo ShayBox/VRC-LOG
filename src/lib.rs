@@ -14,7 +14,8 @@ use regex::{Captures, Regex};
 pub mod config;
 pub mod provider;
 
-pub fn watch<P: AsRef<Path>>(path: P) -> notify::Result<(Sender<PathBuf>, Receiver<PathBuf>)> {
+pub type WatchResponse = (Sender<PathBuf>, Receiver<PathBuf>, PollWatcher);
+pub fn watch<P: AsRef<Path>>(path: P) -> notify::Result<WatchResponse> {
     let (tx_a, rx_a) = crossbeam::channel::unbounded();
     let (tx_b, tx_c) = (tx_a.clone(), tx_a.clone());
 
@@ -36,7 +37,7 @@ pub fn watch<P: AsRef<Path>>(path: P) -> notify::Result<(Sender<PathBuf>, Receiv
 
     watcher.watch(path.as_ref(), RecursiveMode::Recursive)?;
 
-    Ok((tx_a, rx_a))
+    Ok((tx_a, rx_a, watcher))
 }
 
 pub fn parse_path_env(haystack: &str) -> Result<PathBuf, Error> {
