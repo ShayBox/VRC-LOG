@@ -1,35 +1,48 @@
-use std::collections::HashMap;
-
 use anyhow::bail;
+#[cfg(feature = "title")]
+use crossterm::{execute, terminal::SetTitle};
 use vrc_log::{
+    box_provider,
     config::VRChatConfig,
-    provider,
-    provider::{prelude::*, Provider, Providers},
+    provider::{prelude::*, Provider, ProviderType, Providers},
 };
 
 fn main() -> anyhow::Result<()> {
-    let cache = Sqlite::new()?;
+    #[cfg(feature = "title")]
+    execute!(std::io::stdout(), SetTitle("VRC-OSC"))?;
+
     let config = VRChatConfig::load()?;
-    let providers: Providers = HashMap::from([
-        // ("Sqlite", provider!(Sqlite::new()?)),
-        ("Ravenwood", provider!(Ravenwood::default())),
+    let providers = Providers::from([
+        #[cfg(feature = "ravenwood")]
+        (ProviderType::Ravenwood, box_provider!(Ravenwood::default())),
+        #[cfg(feature = "sqlite")]
+        (ProviderType::Sqlite, box_provider!(Sqlite::new()?)),
     ]);
 
-    let (_tx, rx, _watcher) = vrc_log::watch(config.cache_directory)?;
+    #[cfg(feature = "sqlite")]
+    let cache = &providers[&ProviderType::Sqlite];
+
+    let (_tx, rx, _pw) = vrc_log::watch(config.cache_directory)?;
     while let Ok(path) = rx.recv() {
         let Ok(avatar_ids) = vrc_log::parse_avatar_ids(path) else {
             continue;
         };
 
         for avatar_id in avatar_ids {
+            #[cfg(feature = "sqlite")]
             if !cache.send_avatar_id(&avatar_id).unwrap_or(true) {
                 continue;
             }
 
             vrc_log::print_colorized(&avatar_id);
-            for (name, provider) in &providers {
+            for (provider_type, provider) in &providers {
+                #[cfg(feature = "sqlite")]
+                if provider_type == &ProviderType::Sqlite {
+                    continue;
+                }
+
                 if provider.send_avatar_id(&avatar_id)? {
-                    println!("^ Successfully Submitted to {name} ^");
+                    println!("^ Successfully Submitted to {provider_type} ^");
                 }
             }
         }
