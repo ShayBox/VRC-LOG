@@ -4,23 +4,25 @@ use crossterm::{execute, terminal::SetTitle};
 use vrc_log::{
     box_provider,
     config::VRChatConfig,
-    provider::{prelude::*, Provider, ProviderType, Providers},
+    provider::{prelude::*, ProviderType, Providers},
 };
 
 fn main() -> anyhow::Result<()> {
     #[cfg(feature = "title")]
-    execute!(std::io::stdout(), SetTitle("VRC-OSC"))?;
+    execute!(std::io::stdout(), SetTitle("VRC-LOG"))?;
 
     let config = VRChatConfig::load()?;
     let providers = Providers::from([
+        #[cfg(all(feature = "cache", feature = "sqlite"))]
+        (ProviderType::Cache, box_provider!(Sqlite::new()?)),
         #[cfg(feature = "ravenwood")]
         (ProviderType::Ravenwood, box_provider!(Ravenwood::default())),
-        #[cfg(feature = "sqlite")]
+        #[cfg(all(feature = "sqlite", not(feature = "cache")))]
         (ProviderType::Sqlite, box_provider!(Sqlite::new()?)),
     ]);
 
-    #[cfg(feature = "sqlite")]
-    let cache = &providers[&ProviderType::Sqlite];
+    #[cfg(feature = "cache")]
+    let cache = &providers[&ProviderType::Cache];
 
     let (_tx, rx, _pw) = vrc_log::watch(config.cache_directory)?;
     while let Ok(path) = rx.recv() {
@@ -29,18 +31,13 @@ fn main() -> anyhow::Result<()> {
         };
 
         for avatar_id in avatar_ids {
-            #[cfg(feature = "sqlite")]
+            #[cfg(feature = "cache")]
             if !cache.send_avatar_id(&avatar_id).unwrap_or(true) {
                 continue;
             }
 
             vrc_log::print_colorized(&avatar_id);
             for (provider_type, provider) in &providers {
-                #[cfg(feature = "sqlite")]
-                if provider_type == &ProviderType::Sqlite {
-                    continue;
-                }
-
                 if provider.send_avatar_id(&avatar_id)? {
                     println!("^ Successfully Submitted to {provider_type} ^");
                 }
