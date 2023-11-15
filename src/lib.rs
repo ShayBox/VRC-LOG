@@ -12,6 +12,8 @@ use parking_lot::RwLock;
 use regex::{Captures, Regex};
 
 pub mod config;
+#[cfg(feature = "discord")]
+pub mod discord;
 pub mod provider;
 
 pub type WatchResponse = (Sender<PathBuf>, Receiver<PathBuf>, PollWatcher);

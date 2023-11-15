@@ -1,15 +1,13 @@
-use std::{collections::HashMap, sync::Arc, time::Duration};
+use std::collections::HashMap;
 
-use discord_presence::Client as DiscordRPC;
-use parking_lot::RwLock;
 use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 
-use crate::provider::Provider;
+use crate::{
+    discord::{User, DEVELOPER_ID, USER},
+    provider::Provider,
+};
 
-const CLIENT_ID: u64 = 1137885877918502923;
-const USER_ID: &str = "358558305997684739";
 const USER_AGENT: &str = concat!(
     "VRC-LOG/",
     env!("CARGO_PKG_VERSION"),
@@ -29,11 +27,11 @@ pub struct Status {
 
 pub struct Ravenwood {
     client:  Client,
-    user_id: Arc<RwLock<String>>,
+    user_id: String,
 }
 
 impl Ravenwood {
-    pub fn new(client: Client, user_id: Arc<RwLock<String>>) -> Self {
+    pub fn new(client: Client, user_id: String) -> Self {
         Self { client, user_id }
     }
 }
@@ -41,29 +39,20 @@ impl Ravenwood {
 impl Default for Ravenwood {
     fn default() -> Self {
         let client = Client::default();
-        let user_id = Arc::new(RwLock::new(String::new()));
-        let user_id_rpc = user_id.clone();
+        let user_id = if let Some(user) = USER.clone() {
+            let User { id, name, nick } = user;
+            println!("[Ravenwood] Authenticated as {nick} ({name})");
 
-        let mut discord_rpc = DiscordRPC::new(CLIENT_ID);
-        // discord_rpc.on_error(|ctx| eprintln!("{ctx:#?}")); // discord-presence v0.5.18 constantly emits errors...
-        discord_rpc.on_ready(move |ctx| {
-            if let Some(event) = ctx.event.as_object() {
-                if let Some(user) = event.get("user").and_then(Value::as_object) {
-                    if let Some(id) = user.get("id").and_then(Value::as_str) {
-                        *user_id_rpc.write() = id.into();
-                    }
-                }
-            };
-        });
-        let thread = discord_rpc.start();
-        std::thread::sleep(Duration::from_secs(5));
-        thread.stop().expect("Failed to stop RPC thread");
+            id
+        } else {
+            eprintln!("Error: Discord RPC Connection Failed\n");
+            eprintln!("This may be due to one of the following reasons:");
+            eprintln!("1. Discord is not running on your system.");
+            eprintln!("2. VRC-LOG was restarted too quickly.\n");
+            eprintln!("The User ID will default to the developer: ShayBox");
 
-        if *user_id.read() == String::new() {
-            *user_id.write() = USER_ID.into();
-            println!("[Ravenwood] Couldn't get your Discord ID, please make sure Discord is open");
-            println!("[Ravenwood] Defaulting to the ID of the developer of this program, ShayBox");
-        }
+            DEVELOPER_ID.to_owned()
+        };
 
         Self::new(client, user_id)
     }
@@ -77,7 +66,7 @@ impl Provider for Ravenwood {
             .header("User-Agent", USER_AGENT)
             .json(&HashMap::from([
                 ("id", avatar_id),
-                ("userid", &self.user_id.read()),
+                ("userid", &self.user_id),
             ]))
             .send()?
             .json::<RavenwoodResponse>()?;

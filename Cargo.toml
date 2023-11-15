@@ -1,6 +1,6 @@
 [package]
 name = "vrc-log"
-version = "0.4.1"
+version = "0.4.2"
 authors = ["Shayne Hartford <shaybox@shaybox.com>"]
 edition = "2021"
 description = "VRChat Local Cache Avatar ID Logger"
@@ -30,7 +30,8 @@ strum = { version = "0.25", features = ["derive"] }
 [features]
 default = ["cache", "ravenwood", "sqlite", "title"]
 cache = []
-ravenwood = ["dep:discord-presence", "dep:reqwest"]
+discord = ["dep:discord-presence"]
+ravenwood = ["dep:reqwest", "discord"]
 sqlite = ["dep:sqlite"]
 title = ["dep:crossterm"]
 

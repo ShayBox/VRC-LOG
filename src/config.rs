@@ -4,12 +4,11 @@ use std::{
     path::PathBuf,
 };
 
-use lazy_static::lazy_static;
 use serde::{Deserialize, Deserializer, Serialize};
 
 const DEFAULT: &str = "%AppData%\\..\\LocalLow\\VRChat\\VRChat";
 
-lazy_static! {
+lazy_static::lazy_static! {
     pub static ref DEFAULT_PATH: PathBuf = crate::parse_path_env(DEFAULT).unwrap();
 }
 
