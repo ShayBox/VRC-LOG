@@ -4,7 +4,7 @@ use discord_presence::Client;
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 
-pub const CLIENT_ID: u64 = 1137885877918502923;
+pub const CLIENT_ID: u64 = 1_137_885_877_918_502_923;
 pub const DEVELOPER_ID: &str = "358558305997684739";
 
 #[derive(Clone, Deserialize, Serialize)]

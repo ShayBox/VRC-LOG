@@ -13,12 +13,12 @@ lazy_static::lazy_static! {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct VRChatConfig {
+pub struct VRChat {
     #[serde(deserialize_with = "deserialize")]
     pub cache_directory: PathBuf,
 }
 
-impl Default for VRChatConfig {
+impl Default for VRChat {
     fn default() -> Self {
         Self {
             cache_directory: DEFAULT_PATH.join("Cache-WindowsPlayer"),
@@ -26,11 +26,15 @@ impl Default for VRChatConfig {
     }
 }
 
-impl VRChatConfig {
+impl VRChat {
+    #[must_use]
     pub fn get_path() -> PathBuf {
         DEFAULT_PATH.join("config.json")
     }
 
+    /// # Errors
+    ///
+    /// Will return `Err` if `File::open`, `File::read_to_string`, or `File::rewind` errors
     pub fn load() -> Result<Self, Error> {
         let path = Self::get_path();
         let mut file = File::options()
@@ -43,13 +47,17 @@ impl VRChatConfig {
         file.read_to_string(&mut text)?;
         file.rewind()?;
 
-        match serde_json::from_str(&text) {
-            Ok(config) => Ok(config),
-            Err(_) => Ok(VRChatConfig::default()),
-        }
+        serde_json::from_str(&text).map_or_else(|_| Ok(Self::default()), Ok)
     }
 }
 
+/// # Errors
+///
+/// Will never return `Err`
+///
+/// # Panics
+///
+/// Will panic if `crate::parse_path_env` errors
 pub fn deserialize<'de, D: Deserializer<'de>>(deserializer: D) -> Result<PathBuf, D::Error> {
     let str = Deserialize::deserialize(deserializer).unwrap_or(DEFAULT);
     let path = crate::parse_path_env(str)

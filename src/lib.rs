@@ -1,3 +1,7 @@
+#![warn(clippy::pedantic)]
+#![warn(clippy::nursery)]
+#![warn(clippy::cargo)]
+
 use std::{
     fs::File,
     io::{Error, Read},
@@ -17,6 +21,10 @@ pub mod discord;
 pub mod provider;
 
 pub type WatchResponse = (Sender<PathBuf>, Receiver<PathBuf>, PollWatcher);
+
+/// # Errors
+///
+/// Will return `Err` if `PollWatcher::watch` errors
 pub fn watch<P: AsRef<Path>>(path: P) -> notify::Result<WatchResponse> {
     let (tx_a, rx_a) = crossbeam::channel::unbounded();
     let (tx_b, tx_c) = (tx_a.clone(), tx_a.clone());
@@ -42,6 +50,13 @@ pub fn watch<P: AsRef<Path>>(path: P) -> notify::Result<WatchResponse> {
     Ok((tx_a, rx_a, watcher))
 }
 
+/// # Errors
+///
+/// Will return `Err` if `std::fs::canonicalize` errors
+///
+/// # Panics
+///
+/// Will panic if an environment variable doesn't exist
 pub fn parse_path_env(haystack: &str) -> Result<PathBuf, Error> {
     lazy_static! {
         static ref RE: Regex = Regex::new(r"%(\w+)%").unwrap();
@@ -56,6 +71,9 @@ pub fn parse_path_env(haystack: &str) -> Result<PathBuf, Error> {
     Ok(path)
 }
 
+/// # Errors
+///
+/// Will return `Err` if `File::open` or `File::read_to_end` errors
 pub fn parse_avatar_ids(path: PathBuf) -> Result<Vec<String>, Error> {
     lazy_static! {
         static ref RE: Regex = Regex::new(r"avtr_\w{8}-\w{4}-\w{4}-\w{4}-\w{12}").unwrap();

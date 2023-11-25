@@ -1,12 +1,14 @@
 [package]
 name = "vrc-log"
-version = "0.4.2"
+version = "0.4.3"
 authors = ["Shayne Hartford <shaybox@shaybox.com>"]
 edition = "2021"
 description = "VRChat Local Cache Avatar ID Logger"
 readme = "README.md"
 repository = "https://github.com/ShayBox/VRC-LOG"
 license = "MIT"
+keywords = ["vrchat", "local", "cache", "avatar", "logger"]
+categories = ["config", "database", "filesystem", "games", "parsing"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

@@ -1,28 +1,28 @@
-use anyhow::bail;
 #[cfg(feature = "title")]
 use crossterm::{execute, terminal::SetTitle};
 use vrc_log::{
-    box_provider,
-    config::VRChatConfig,
-    provider::{prelude::*, ProviderType, Providers},
+    box_db,
+    config::VRChat,
+    provider::{prelude::*, Providers, Type},
 };
 
 fn main() -> anyhow::Result<()> {
     #[cfg(feature = "title")]
     execute!(std::io::stdout(), SetTitle("VRC-LOG"))?;
 
-    let config = VRChatConfig::load()?;
-    let providers = Providers::from([
+    let config = VRChat::load()?;
+    #[cfg_attr(not(feature = "cache"), allow(unused_mut))]
+    let mut providers = Providers::from([
         #[cfg(all(feature = "cache", feature = "sqlite"))]
-        (ProviderType::Cache, box_provider!(Sqlite::new()?)),
+        (Type::Cache, box_db!(Sqlite::new()?)),
         #[cfg(feature = "ravenwood")]
-        (ProviderType::Ravenwood, box_provider!(Ravenwood::default())),
+        (Type::Ravenwood, box_db!(Ravenwood::default())),
         #[cfg(all(feature = "sqlite", not(feature = "cache")))]
-        (ProviderType::Sqlite, box_provider!(Sqlite::new()?)),
+        (Type::Sqlite, box_db!(Sqlite::new()?)),
     ]);
 
     #[cfg(feature = "cache")]
-    let cache = &providers[&ProviderType::Cache];
+    let cache = providers.shift_remove(&Type::Cache).unwrap();
 
     let (_tx, rx, _pw) = vrc_log::watch(config.cache_directory)?;
     while let Ok(path) = rx.recv() {
@@ -31,19 +31,30 @@ fn main() -> anyhow::Result<()> {
         };
 
         for avatar_id in avatar_ids {
-            #[cfg(feature = "cache")]
-            if !cache.send_avatar_id(&avatar_id).unwrap_or(true) {
+            #[cfg(feature = "cache")] // Check if the avatar is unique
+            let mut unique_and_success = cache.check_avatar_id(&avatar_id).unwrap_or(true);
+
+            #[cfg(feature = "cache")] // Skip if the avatar is not unique
+            if !unique_and_success {
                 continue;
             }
 
-            vrc_log::print_colorized(&avatar_id);
+            vrc_log::print_colorized(&avatar_id); // Submit the avatar to providers
             for (provider_type, provider) in &providers {
-                if provider.send_avatar_id(&avatar_id)? {
+                if let Err(error) = provider.send_avatar_id(&avatar_id) {
+                    unique_and_success = false; // Skip submitting to cache
+                    eprintln!("^ Failed to submit to {provider_type}: {error}");
+                } else {
                     println!("^ Successfully Submitted to {provider_type} ^");
                 }
+            }
+
+            #[cfg(feature = "cache")]
+            if unique_and_success {
+                cache.send_avatar_id(&avatar_id)?;
             }
         }
     }
 
-    bail!("Channel Closed");
+    anyhow::bail!("Channel Closed");
 }

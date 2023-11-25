@@ -1,3 +1,4 @@
+use anyhow::Result;
 use sqlite::Connection;
 
 use crate::{config::DEFAULT_PATH, provider::Provider};
@@ -7,7 +8,10 @@ pub struct Sqlite {
 }
 
 impl Sqlite {
-    pub fn new() -> anyhow::Result<Self> {
+    /// # Errors
+    ///
+    /// Will return `Err` if `sqlite::open` errors
+    pub fn new() -> Result<Self> {
         let path = DEFAULT_PATH.join("avatars.sqlite");
         let connection = sqlite::open(path)?;
 
@@ -20,7 +24,15 @@ impl Sqlite {
 }
 
 impl Provider for Sqlite {
-    fn send_avatar_id(&self, avatar_id: &str) -> anyhow::Result<bool> {
+    fn check_avatar_id(&self, avatar_id: &str) -> anyhow::Result<bool> {
+        let query = "SELECT 1 FROM avatars WHERE id = (?) LIMIT 1";
+        let mut statement = self.connection.prepare(query)?;
+        statement.bind((1, avatar_id))?;
+
+        Ok(matches!(statement.next()?, sqlite::State::Done))
+    }
+
+    fn send_avatar_id(&self, avatar_id: &str) -> Result<bool> {
         let query = "INSERT INTO avatars VALUES (?)";
         let mut statement = self.connection.prepare(query)?;
         statement.bind((1, avatar_id))?;

@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use anyhow::bail;
 use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize};
 
@@ -15,7 +16,7 @@ const USER_AGENT: &str = concat!(
 );
 
 #[derive(Deserialize, Serialize)]
-pub struct RavenwoodResponse {
+pub struct Response {
     status: Status,
 }
 
@@ -31,7 +32,8 @@ pub struct Ravenwood {
 }
 
 impl Ravenwood {
-    pub fn new(client: Client, user_id: String) -> Self {
+    #[must_use]
+    pub const fn new(client: Client, user_id: String) -> Self {
         Self { client, user_id }
     }
 }
@@ -39,26 +41,33 @@ impl Ravenwood {
 impl Default for Ravenwood {
     fn default() -> Self {
         let client = Client::default();
-        let user_id = if let Some(user) = USER.clone() {
-            let User { id, name, nick } = user;
-            println!("[Ravenwood] Authenticated as {nick} ({name})");
+        let user_id = USER.clone().map_or_else(
+            || {
+                eprintln!("Error: Discord RPC Connection Failed\n");
+                eprintln!("This may be due to one of the following reasons:");
+                eprintln!("1. Discord is not running on your system.");
+                eprintln!("2. VRC-LOG was restarted too quickly.\n");
+                eprintln!("The User ID will default to the developer: ShayBox");
 
-            id
-        } else {
-            eprintln!("Error: Discord RPC Connection Failed\n");
-            eprintln!("This may be due to one of the following reasons:");
-            eprintln!("1. Discord is not running on your system.");
-            eprintln!("2. VRC-LOG was restarted too quickly.\n");
-            eprintln!("The User ID will default to the developer: ShayBox");
+                DEVELOPER_ID.to_owned()
+            },
+            |user| {
+                let User { id, name, nick } = user;
+                println!("[Ravenwood] Authenticated as {nick} ({name})");
 
-            DEVELOPER_ID.to_owned()
-        };
+                id
+            },
+        );
 
         Self::new(client, user_id)
     }
 }
 
 impl Provider for Ravenwood {
+    fn check_avatar_id(&self, _avatar_id: &str) -> anyhow::Result<bool> {
+        bail!("Unsupported")
+    }
+
     fn send_avatar_id(&self, avatar_id: &str) -> anyhow::Result<bool> {
         let response = self
             .client
@@ -69,7 +78,7 @@ impl Provider for Ravenwood {
                 ("userid", &self.user_id),
             ]))
             .send()?
-            .json::<RavenwoodResponse>()?;
+            .json::<Response>()?;
 
         Ok(response.status.status == 201)
     }
