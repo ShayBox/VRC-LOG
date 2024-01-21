@@ -32,17 +32,17 @@ fn main() -> anyhow::Result<()> {
 
         for avatar_id in avatar_ids {
             #[cfg(feature = "cache")] // Check if the avatar is unique
-            let mut unique_and_success = cache.check_avatar_id(&avatar_id).unwrap_or(true);
+            let mut unique_and_submitted = cache.check_avatar_id(&avatar_id).unwrap_or(true);
 
             #[cfg(feature = "cache")] // Skip if the avatar is not unique
-            if !unique_and_success {
+            if !unique_and_submitted {
                 continue;
             }
 
             vrc_log::print_colorized(&avatar_id); // Submit the avatar to providers
             for (provider_type, provider) in &providers {
                 if let Err(error) = provider.send_avatar_id(&avatar_id) {
-                    unique_and_success = false; // Skip submitting to cache
+                    unique_and_submitted = false; // Failed to submit
                     eprintln!("^ Failed to submit to {provider_type}: {error}");
                 } else {
                     println!("^ Successfully Submitted to {provider_type} ^");
@@ -50,7 +50,7 @@ fn main() -> anyhow::Result<()> {
             }
 
             #[cfg(feature = "cache")]
-            if unique_and_success {
+            if unique_and_submitted {
                 cache.send_avatar_id(&avatar_id)?;
             }
         }

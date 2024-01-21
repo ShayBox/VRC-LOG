@@ -24,7 +24,7 @@ impl Sqlite {
 }
 
 impl Provider for Sqlite {
-    fn check_avatar_id(&self, avatar_id: &str) -> anyhow::Result<bool> {
+    fn check_avatar_id(&self, avatar_id: &str) -> Result<bool> {
         let query = "SELECT 1 FROM avatars WHERE id = (?) LIMIT 1";
         let mut statement = self.connection.prepare(query)?;
         statement.bind((1, avatar_id))?;

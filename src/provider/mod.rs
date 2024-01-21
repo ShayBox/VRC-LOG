@@ -1,3 +1,4 @@
+use anyhow::Result;
 use indexmap::IndexMap;
 use strum::Display;
 
@@ -23,14 +24,14 @@ pub trait Provider {
     /// # Errors
     ///
     /// Will return `Err` if anything errors
-    fn check_avatar_id(&self, avatar_id: &str) -> anyhow::Result<bool>;
+    fn check_avatar_id(&self, avatar_id: &str) -> Result<bool>;
 
     /// True: New/Unique | False: Duplicate/Existing
     ///
     /// # Errors
     ///
     /// Will return `Err` if anything errors
-    fn send_avatar_id(&self, avatar_id: &str) -> anyhow::Result<bool>;
+    fn send_avatar_id(&self, avatar_id: &str) -> Result<bool>;
 }
 
 pub type Providers = IndexMap<Type, Box<dyn Provider>>;

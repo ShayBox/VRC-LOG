@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use anyhow::bail;
+use anyhow::{bail, Result};
 use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize};
 
@@ -64,11 +64,11 @@ impl Default for Ravenwood {
 }
 
 impl Provider for Ravenwood {
-    fn check_avatar_id(&self, _avatar_id: &str) -> anyhow::Result<bool> {
+    fn check_avatar_id(&self, _avatar_id: &str) -> Result<bool> {
         bail!("Unsupported")
     }
 
-    fn send_avatar_id(&self, avatar_id: &str) -> anyhow::Result<bool> {
+    fn send_avatar_id(&self, avatar_id: &str) -> Result<bool> {
         let response = self
             .client
             .put("https://api.ravenwood.dev/avatars/putavatar")

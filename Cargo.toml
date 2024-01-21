@@ -1,6 +1,6 @@
 [package]
 name = "vrc-log"
-version = "0.4.3"
+version = "0.4.4"
 authors = ["Shayne Hartford <shaybox@shaybox.com>"]
 edition = "2021"
 description = "VRChat Local Cache Avatar ID Logger"
@@ -44,3 +44,8 @@ opt-level = "z"   # Optimize for size.
 lto = true
 codegen-units = 1
 panic = "abort"
+
+[lints.clippy]
+pedantic = "warn"
+nursery = "warn"
+cargo = "warn"

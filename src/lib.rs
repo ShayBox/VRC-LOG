@@ -1,7 +1,3 @@
-#![warn(clippy::pedantic)]
-#![warn(clippy::nursery)]
-#![warn(clippy::cargo)]
-
 use std::{
     fs::File,
     io::{Error, Read},
