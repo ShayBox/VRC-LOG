@@ -1,15 +1,16 @@
 #[cfg(feature = "title")]
 use crossterm::{execute, terminal::SetTitle};
 use vrc_log::{
-    box_db,
-    config::VRChat,
-    provider::{prelude::*, Providers, Type},
+    box_db, 
+    config::VRChat, 
+    get_local_time, 
+    provider::{prelude::*, Providers, Type}
 };
 
 fn main() -> anyhow::Result<()> {
     #[cfg(feature = "title")]
     execute!(std::io::stdout(), SetTitle("VRC-LOG"))?;
-
+    
     let config = VRChat::load()?;
     #[cfg_attr(not(feature = "cache"), allow(unused_mut))]
     let mut providers = Providers::from([
@@ -39,13 +40,15 @@ fn main() -> anyhow::Result<()> {
                 continue;
             }
 
+            let local_time = get_local_time();
+            
             vrc_log::print_colorized(&avatar_id); // Submit the avatar to providers
             for (provider_type, provider) in &providers {
                 if let Err(error) = provider.send_avatar_id(&avatar_id) {
                     unique_and_submitted = false; // Failed to submit
-                    eprintln!("^ Failed to submit to {provider_type}: {error}");
+                    eprintln!("^{local_time}: Failed to submit to {provider_type}: {error}");
                 } else {
-                    println!("^ Successfully Submitted to {provider_type} ^");
+                    println!("^{local_time}: Successfully Submitted to {provider_type} ^");
                 }
             }
 
