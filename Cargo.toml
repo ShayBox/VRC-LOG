@@ -14,6 +14,7 @@ categories = ["config", "database", "filesystem", "games", "parsing"]
 
 [dependencies]
 anyhow = "1"
+chrono = "0.4.32"
 colored = "2"
 crossbeam = "0.8"
 crossterm = { version = "0.27", optional = true }

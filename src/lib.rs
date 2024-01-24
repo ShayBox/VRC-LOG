@@ -10,6 +10,7 @@ use lazy_static::lazy_static;
 use notify::{Config, Event, PollWatcher, RecursiveMode, Watcher};
 use parking_lot::RwLock;
 use regex::{Captures, Regex};
+use chrono::Local;
 
 pub mod config;
 #[cfg(feature = "discord")]
@@ -17,6 +18,11 @@ pub mod discord;
 pub mod provider;
 
 pub type WatchResponse = (Sender<PathBuf>, Receiver<PathBuf>, PollWatcher);
+
+pub fn get_local_time() -> String {
+    let local_time = Local::now();
+    local_time.format("%Y-%m-%d %H:%M:%S").to_string()
+}
 
 /// # Errors
 ///
