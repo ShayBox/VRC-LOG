@@ -4,13 +4,13 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use chrono::Local;
 use colored::{Color, Colorize};
 use crossbeam::channel::{Receiver, Sender};
 use lazy_static::lazy_static;
 use notify::{Config, Event, PollWatcher, RecursiveMode, Watcher};
 use parking_lot::RwLock;
 use regex::{Captures, Regex};
-use chrono::Local;
 
 pub mod config;
 #[cfg(feature = "discord")]
@@ -19,9 +19,9 @@ pub mod provider;
 
 pub type WatchResponse = (Sender<PathBuf>, Receiver<PathBuf>, PollWatcher);
 
+#[must_use]
 pub fn get_local_time() -> String {
-    let local_time = Local::now();
-    local_time.format("%Y-%m-%d %H:%M:%S").to_string()
+    Local::now().format("%Y-%m-%d %H:%M:%S").to_string()
 }
 
 /// # Errors
