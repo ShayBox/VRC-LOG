@@ -4,7 +4,7 @@ use anyhow::{bail, Result};
 use reqwest::blocking::Client;
 
 use crate::{
-    discord::{User, DEVELOPER_ID, USER},
+    discord::{DEVELOPER_ID, USER},
     provider::{Provider, Type},
 };
 
@@ -24,28 +24,28 @@ impl VRCDB {
     pub const fn new(client: Client, userid: String) -> Self {
         Self { client, userid }
     }
+
+    fn default() -> String {
+        eprintln!("Error: Discord RPC Connection Failed\n");
+        eprintln!("This may be due to one of the following reasons:");
+        eprintln!("1. Discord is not running on your system.");
+        eprintln!("2. VRC-LOG was restarted too quickly.\n");
+        eprintln!("The User ID will default to the developer: ShayBox");
+
+        DEVELOPER_ID.to_owned()
+    }
 }
 
 impl Default for VRCDB {
     fn default() -> Self {
         let client = Client::default();
-        let userid = USER.clone().map_or_else(
-            || {
-                eprintln!("Error: Discord RPC Connection Failed\n");
-                eprintln!("This may be due to one of the following reasons:");
-                eprintln!("1. Discord is not running on your system.");
-                eprintln!("2. VRC-LOG was restarted too quickly.\n");
-                eprintln!("The User ID will default to the developer: ShayBox");
+        let userid = USER.clone().map_or_else(Self::default, |user| {
+            if let Some(username) = user.username {
+                println!("{} Authenticated as {username}", Type::VRCDB);
+            }
 
-                DEVELOPER_ID.to_owned()
-            },
-            |user| {
-                let User { id, name, nick } = user;
-                println!("{} Authenticated as {nick} ({name})", Type::VRCDB);
-
-                id
-            },
-        );
+            user.id.unwrap_or_else(Self::default)
+        });
 
         Self::new(client, userid)
     }
