@@ -41,6 +41,7 @@ impl VRChat {
             .read(true)
             .write(true)
             .create(true)
+            .truncate(false)
             .open(path)?;
 
         let mut text = String::new();

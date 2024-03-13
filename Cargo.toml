@@ -1,6 +1,6 @@
 [package]
 name = "vrc-log"
-version = "0.4.5"
+version = "0.5.0"
 authors = ["Shayne Hartford <shaybox@shaybox.com>"]
 edition = "2021"
 description = "VRChat Local Cache Avatar ID Logger"
@@ -27,16 +27,16 @@ regex = "1"
 reqwest = { version = "0.11", features = ["blocking", "json"], optional = true }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-sqlite = { version = "0.32", features = ["bundled"], optional = true }
-strum = { version = "0.25", features = ["derive"] }
+sqlite = { version = "0.34", features = ["bundled"], optional = true }
+strum = { version = "0.26", features = ["derive"] }
 
 [features]
-default = ["cache", "ravenwood", "sqlite", "title"]
+default = ["cache", "sqlite", "title", "vrcdb"]
 cache = []
 discord = ["dep:discord-presence"]
-ravenwood = ["dep:reqwest", "discord"]
 sqlite = ["dep:sqlite"]
 title = ["dep:crossterm"]
+vrcdb = ["dep:reqwest", "discord"]
 
 # https://github.com/johnthagen/min-sized-rust
 [profile.release]
@@ -47,6 +47,7 @@ codegen-units = 1
 panic = "abort"
 
 [lints.clippy]
-pedantic = "warn"
-nursery = "warn"
-cargo = "warn"
+pedantic = { level = "warn", priority = -1 }
+nursery = { level = "warn", priority = -1 }
+cargo = { level = "warn", priority = -1 }
+multiple_crate_versions = "allow"

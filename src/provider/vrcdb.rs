@@ -2,11 +2,10 @@ use std::collections::HashMap;
 
 use anyhow::{bail, Result};
 use reqwest::blocking::Client;
-use serde::{Deserialize, Serialize};
 
 use crate::{
     discord::{User, DEVELOPER_ID, USER},
-    provider::Provider,
+    provider::{Provider, Type},
 };
 
 const USER_AGENT: &str = concat!(
@@ -15,33 +14,22 @@ const USER_AGENT: &str = concat!(
     " shaybox@shaybox.com"
 );
 
-#[derive(Deserialize, Serialize)]
-pub struct Response {
-    status: Status,
+pub struct VRCDB {
+    client: Client,
+    userid: String,
 }
 
-#[derive(Deserialize, Serialize)]
-pub struct Status {
-    message: String,
-    status:  i64,
-}
-
-pub struct Ravenwood {
-    client:  Client,
-    user_id: String,
-}
-
-impl Ravenwood {
+impl VRCDB {
     #[must_use]
-    pub const fn new(client: Client, user_id: String) -> Self {
-        Self { client, user_id }
+    pub const fn new(client: Client, userid: String) -> Self {
+        Self { client, userid }
     }
 }
 
-impl Default for Ravenwood {
+impl Default for VRCDB {
     fn default() -> Self {
         let client = Client::default();
-        let user_id = USER.clone().map_or_else(
+        let userid = USER.clone().map_or_else(
             || {
                 eprintln!("Error: Discord RPC Connection Failed\n");
                 eprintln!("This may be due to one of the following reasons:");
@@ -53,17 +41,17 @@ impl Default for Ravenwood {
             },
             |user| {
                 let User { id, name, nick } = user;
-                println!("[Ravenwood] Authenticated as {nick} ({name})");
+                println!("{} Authenticated as {nick} ({name})", Type::VRCDB);
 
                 id
             },
         );
 
-        Self::new(client, user_id)
+        Self::new(client, userid)
     }
 }
 
-impl Provider for Ravenwood {
+impl Provider for VRCDB {
     fn check_avatar_id(&self, _avatar_id: &str) -> Result<bool> {
         bail!("Unsupported")
     }
@@ -71,15 +59,14 @@ impl Provider for Ravenwood {
     fn send_avatar_id(&self, avatar_id: &str) -> Result<bool> {
         let response = self
             .client
-            .put("https://api.ravenwood.dev/avatars/putavatar")
+            .put("https://search.bs002.de/api/Avatar/putavatar")
             .header("User-Agent", USER_AGENT)
             .json(&HashMap::from([
                 ("id", avatar_id),
-                ("userid", &self.user_id),
+                ("userid", &self.userid),
             ]))
-            .send()?
-            .json::<Response>()?;
+            .send()?;
 
-        Ok(response.status.status == 201)
+        Ok(response.status() == 201)
     }
 }

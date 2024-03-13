@@ -3,19 +3,20 @@ use indexmap::IndexMap;
 use strum::Display;
 
 pub mod prelude;
-#[cfg(feature = "ravenwood")]
-pub mod ravenwood;
 #[cfg(feature = "sqlite")]
 pub mod sqlite;
+#[cfg(feature = "vrcdb")]
+pub mod vrcdb;
 
 #[derive(Display, Eq, Hash, PartialEq)]
 pub enum Type {
     #[cfg(feature = "cache")]
     Cache,
-    #[cfg(feature = "ravenwood")]
-    Ravenwood,
     #[cfg(feature = "sqlite")]
     Sqlite,
+    #[cfg(feature = "vrcdb")]
+    #[strum(to_string = "Avatar Search")]
+    VRCDB,
 }
 
 pub trait Provider {

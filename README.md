@@ -11,8 +11,6 @@
 
 VRChat Local Cache Avatar ID Logger
 
-I created this as an extensible alternative to [Ravenwood-AvatarLogger]  
-
 ## Notice
 This project does **NOT** rip or steal avatars, it just scans your local cache for avatar ids and sends them to avatar database providers
 
@@ -21,16 +19,16 @@ This program prints [VRCX] avatar links when a new (to you) avatar is found
 You can place a **shortcut** to this program within the [VRCX] Auto-Launch Folder (Settings > Advanced)
 
 ### Provider Support
-- [Ravenwood] (Web & VRCX)
-- [VRCDB] (World) - Uses the Ravenwood database
-- ~~[Just H Party]~~ (Web & VRCX) - There's no way to submit avatars
-- ~~[Prismic's Avatar Search]~~ (World) - There's no way to submit avatars
+- [Avatar Search (Discord)] - Uses VRCDB
+- [Avatar Search (World)] - Uses VRCDB
+- ~~Ravenwood (Web & VRCX)~~ - Used VRCDB - Shutdown
+- ~~[Just H Party (Web & VRCX)]~~ - There's no way to submit avatars
+- ~~[Prismic's Avatar Search (World)]~~ - There's no way to submit avatars
 
 Additional providers are welcome, please open an issue, pull request, or join Discord
 
-[Ravenwood]: https://vrcdb.ravenwood.dev
-[Just H Party]: https://avtr.just-h.party
+[Avatar Search (Discord)]: https://discord.gg/q427ecnUvj
+[Avatar Search (World)]: https://vrchat.com/home/world/wrld_1146f625-5d42-40f5-bfe7-06a7664e2796
+[Just H Party (Web & VRCX)]: https://avtr.just-h.party
+[Prismic's Avatar Search (World)]: https://vrchat.com/home/world/wrld_57514404-7f4e-4aee-a50a-57f55d3084bf
 [VRCX]: https://github.com/vrcx-team/VRCX?tab=readme-ov-file#--vrcx
-[VRCDB]: https://vrchat.com/home/world/wrld_1146f625-5d42-40f5-bfe7-06a7664e2796
-[Ravenwood-AvatarLogger]: https://github.com/Lua-Ravenwood/Ravenwood-AvatarLogger
-[Prismic's Avatar Search]: https://vrchat.com/home/world/wrld_57514404-7f4e-4aee-a50a-57f55d3084bf

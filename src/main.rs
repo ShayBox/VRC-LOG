@@ -3,7 +3,6 @@ use crossterm::{execute, terminal::SetTitle};
 use vrc_log::{
     box_db,
     config::VRChat,
-    get_local_time,
     provider::{prelude::*, Providers, Type},
 };
 
@@ -16,8 +15,8 @@ fn main() -> anyhow::Result<()> {
     let mut providers = Providers::from([
         #[cfg(all(feature = "cache", feature = "sqlite"))]
         (Type::Cache, box_db!(Sqlite::new()?)),
-        #[cfg(feature = "ravenwood")]
-        (Type::Ravenwood, box_db!(Ravenwood::default())),
+        #[cfg(feature = "vrcdb")]
+        (Type::VRCDB, box_db!(VRCDB::default())),
         #[cfg(all(feature = "sqlite", not(feature = "cache")))]
         (Type::Sqlite, box_db!(Sqlite::new()?)),
     ]);
@@ -32,28 +31,32 @@ fn main() -> anyhow::Result<()> {
         };
 
         for avatar_id in avatar_ids {
-            #[cfg(feature = "cache")] // Check if the avatar is unique
-            let mut unique_and_submitted = cache.check_avatar_id(&avatar_id).unwrap_or(true);
-
-            #[cfg(feature = "cache")] // Skip if the avatar is not unique
-            if !unique_and_submitted {
+            #[cfg(feature = "cache")] // Avatar is already in cache
+            if !cache.check_avatar_id(&avatar_id).unwrap_or(true) {
                 continue;
-            }
+            };
 
-            let local_time = get_local_time();
+            #[cfg(feature = "cache")] // Don't send to cache if sending failed
+            let mut send_to_cache = true;
+            let local_time = vrc_log::get_local_time();
 
-            vrc_log::print_colorized(&avatar_id); // Submit the avatar to providers
+            vrc_log::print_colorized(&avatar_id);
             for (provider_type, provider) in &providers {
-                if let Err(error) = provider.send_avatar_id(&avatar_id) {
-                    unique_and_submitted = false; // Failed to submit
-                    eprintln!("^{local_time}: Failed to submit to {provider_type}: {error}");
-                } else {
-                    println!("^{local_time}: Successfully Submitted to {provider_type} ^");
+                match provider.send_avatar_id(&avatar_id) {
+                    Ok(unique) => {
+                        if unique {
+                            println!("^ {local_time}: Successfully Submitted to {provider_type}");
+                        }
+                    }
+                    Err(error) => {
+                        send_to_cache = false;
+                        eprintln!("^ {local_time}: Failed to submit to {provider_type}: {error}");
+                    }
                 }
             }
 
             #[cfg(feature = "cache")]
-            if unique_and_submitted {
+            if send_to_cache {
                 cache.send_avatar_id(&avatar_id)?;
             }
         }
