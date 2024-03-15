@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, time::Duration};
 
 use anyhow::{bail, Result};
 use reqwest::blocking::Client;
@@ -41,7 +41,7 @@ impl Default for VRCDB {
         let client = Client::default();
         let userid = USER.clone().map_or_else(Self::default, |user| {
             if let Some(username) = user.username {
-                println!("{} Authenticated as {username}", Type::VRCDB);
+                println!("[{}] Authenticated as {username}", Type::VRCDB);
             }
 
             user.id.unwrap_or_else(Self::default)
@@ -66,6 +66,12 @@ impl Provider for VRCDB {
                 ("userid", &self.userid),
             ]))
             .send()?;
+
+        let status = response.status();
+        if status == 429 {
+            println!("[{}] 429 Rate Limit, Please Wait 1 Minute...", Type::VRCDB);
+            std::thread::sleep(Duration::from_secs(60));
+        }
 
         Ok(response.status() == 201)
     }

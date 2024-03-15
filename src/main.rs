@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 #[cfg(feature = "title")]
 use crossterm::{execute, terminal::SetTitle};
 use vrc_log::{
@@ -41,6 +43,8 @@ fn main() -> anyhow::Result<()> {
             let local_time = vrc_log::get_local_time();
 
             vrc_log::print_colorized(&avatar_id);
+            std::thread::sleep(Duration::from_secs(1));
+
             for (provider_type, provider) in &providers {
                 match provider.send_avatar_id(&avatar_id) {
                     Ok(unique) => {
