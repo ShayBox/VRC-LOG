@@ -17,11 +17,30 @@ pub mod config;
 pub mod discord;
 pub mod provider;
 
+pub const CARGO_PKG_VERSION: &str = env!("CARGO_PKG_VERSION");
+pub const CARGO_PKG_HOMEPAGE: &str = env!("CARGO_PKG_HOMEPAGE");
+
 pub type WatchResponse = (Sender<PathBuf>, Receiver<PathBuf>, PollWatcher);
 
 #[must_use]
 pub fn get_local_time() -> String {
     Local::now().format("%Y-%m-%d %H:%M:%S").to_string()
+}
+
+/// # Errors
+///
+/// Will return `Err` if couldn't get the GitHub repository
+pub fn check_for_updates() -> reqwest::Result<bool> {
+    let response = reqwest::blocking::get(CARGO_PKG_HOMEPAGE)?;
+    let Some(segments) = response.url().path_segments() else {
+        return Ok(false);
+    };
+
+    let Some(remote_version) = segments.last() else {
+        return Ok(false);
+    };
+
+    Ok(remote_version > CARGO_PKG_VERSION)
 }
 
 /// # Errors

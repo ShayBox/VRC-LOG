@@ -2,15 +2,22 @@ use std::time::Duration;
 
 #[cfg(feature = "title")]
 use crossterm::{execute, terminal::SetTitle};
+use terminal_link::Link;
 use vrc_log::{
     box_db,
     config::VRChat,
     provider::{prelude::*, Providers, Type},
+    CARGO_PKG_HOMEPAGE,
 };
 
 fn main() -> anyhow::Result<()> {
     #[cfg(feature = "title")]
     execute!(std::io::stdout(), SetTitle("VRC-LOG"))?;
+
+    if vrc_log::check_for_updates()? {
+        let link = Link::new("An update is available", CARGO_PKG_HOMEPAGE);
+        println!("{link}");
+    }
 
     let config = VRChat::load()?;
     #[cfg_attr(not(feature = "cache"), allow(unused_mut))]
@@ -43,7 +50,7 @@ fn main() -> anyhow::Result<()> {
             let local_time = vrc_log::get_local_time();
 
             vrc_log::print_colorized(&avatar_id);
-            std::thread::sleep(Duration::from_secs(1));
+            std::thread::sleep(Duration::from_secs(3));
 
             for (provider_type, provider) in &providers {
                 match provider.send_avatar_id(&avatar_id) {

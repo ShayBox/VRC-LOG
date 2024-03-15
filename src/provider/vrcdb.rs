@@ -57,7 +57,7 @@ impl Provider for VRCDB {
     }
 
     fn send_avatar_id(&self, avatar_id: &str) -> Result<bool> {
-        let response = self
+        let status = self
             .client
             .put("https://search.bs002.de/api/Avatar/putavatar")
             .header("User-Agent", USER_AGENT)
@@ -65,14 +65,15 @@ impl Provider for VRCDB {
                 ("id", avatar_id),
                 ("userid", &self.userid),
             ]))
-            .send()?;
+            .send()?
+            .status();
 
-        let status = response.status();
         if status == 429 {
             println!("[{}] 429 Rate Limit, Please Wait 1 Minute...", Type::VRCDB);
             std::thread::sleep(Duration::from_secs(60));
+            self.send_avatar_id(avatar_id)
+        } else {
+            Ok(status == 201)
         }
-
-        Ok(response.status() == 201)
     }
 }
