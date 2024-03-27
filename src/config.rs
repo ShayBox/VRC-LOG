@@ -6,7 +6,10 @@ use std::{
 
 use serde::{Deserialize, Deserializer, Serialize};
 
+#[cfg(target_os = "windows")]
 const DEFAULT: &str = "%AppData%\\..\\LocalLow\\VRChat\\VRChat";
+#[cfg(target_os = "linux")]
+const DEFAULT: &str = "%HOME%/.local/share/Steam/steamapps/compatdata/438100/pfx/drive_c/users/steamuser/AppData/LocalLow/VRChat/VRChat";
 
 lazy_static::lazy_static! {
     pub static ref DEFAULT_PATH: PathBuf = crate::parse_path_env(DEFAULT).unwrap();

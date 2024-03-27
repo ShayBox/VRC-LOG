@@ -85,7 +85,7 @@ pub fn parse_path_env(haystack: &str) -> Result<PathBuf, Error> {
 
     let str = RE.replace_all(haystack, |captures: &Captures| {
         let key = &captures[1];
-        std::env::var(key).unwrap()
+        std::env::var(key).expect("Environment Variable not found")
     });
     let path = std::fs::canonicalize(str.as_ref())?;
 

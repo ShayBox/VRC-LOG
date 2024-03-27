@@ -15,6 +15,10 @@ jobs:
             target: i686-pc-windows-msvc
             runner: windows-latest
 
+          - name: Linux
+            target: x86_64-unknown-linux-gnu
+            runner: ubuntu-latest
+
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.runner }}
     steps:
@@ -31,4 +35,9 @@ jobs:
         run: cargo build --release --target ${{ matrix.target }}
 
       - name: Upload Release Binary (Windows)
+        if: ${{ matrix.runner == 'windows-latest' }}
         run: gh release upload ${{ github.ref_name }} ./target/${{ matrix.target }}/release/vrc-log.exe --clobber
+
+      - name: Upload Release Binary (Linux)
+        if: ${{ matrix.runner == 'ubuntu-latest' }}
+        run: gh release upload ${{ github.ref_name }} ./target/${{ matrix.target }}/release/vrc-log --clobber
