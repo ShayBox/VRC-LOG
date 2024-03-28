@@ -14,11 +14,11 @@ lazy_static::lazy_static! {
         let user_event = Arc::new(RwLock::new(None));
         let user_clone = user_event.clone();
         let mut client = Client::new(CLIENT_ID);
-        let _ = client.on_ready(move |ctx| {
+        client.on_ready(move |ctx| {
             if let EventData::Ready(event) = ctx.event {
                 *user_event.write() = event.user;
             };
-        });
+        }).persist();
 
         client.start();
 

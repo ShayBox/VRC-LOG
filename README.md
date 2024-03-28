@@ -20,6 +20,7 @@ You can place a **shortcut** to this program within the [VRCX] Auto-Launch Folde
 
 ### Provider Support
 - [Avatar Search (Discord)] - Uses VRCDB
+- [Avatar Search (Web)] - Uses VRCDB
 - [Avatar Search (World)] - Uses VRCDB
 - ~~Ravenwood (Web & VRCX)~~ - Used VRCDB - Shutdown
 - ~~[Just H Party (Web & VRCX)]~~ - There's no way to submit avatars
@@ -28,6 +29,7 @@ You can place a **shortcut** to this program within the [VRCX] Auto-Launch Folde
 Additional providers are welcome, please open an issue, pull request, or join Discord
 
 [Avatar Search (Discord)]: https://discord.gg/q427ecnUvj
+[Avatar Search (Web)]: https://avatarsearch.bs002.de
 [Avatar Search (World)]: https://vrchat.com/home/world/wrld_1146f625-5d42-40f5-bfe7-06a7664e2796
 [Just H Party (Web & VRCX)]: https://avtr.just-h.party
 [Prismic's Avatar Search (World)]: https://vrchat.com/home/world/wrld_57514404-7f4e-4aee-a50a-57f55d3084bf

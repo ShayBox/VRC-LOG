@@ -40,11 +40,19 @@ impl Default for VRCDB {
     fn default() -> Self {
         let client = Client::default();
         let userid = USER.clone().map_or_else(Self::default, |user| {
-            if let Some(username) = user.username {
-                println!("[{}] Authenticated as {username}", Type::VRCDB);
-            }
+            let userid = user.id.unwrap_or_else(Self::default);
+            if userid == "1045800378228281345" {
+                eprintln!("Vesktop & arRPC do not support fetching user info.");
+                eprintln!("The User ID will default to the developer: ShayBox");
 
-            user.id.unwrap_or_else(Self::default)
+                DEVELOPER_ID.to_owned()
+            } else {
+                if let Some(username) = user.username {
+                    println!("[{}] Authenticated as {username}", Type::VRCDB);
+                }
+
+                userid
+            }
         });
 
         Self::new(client, userid)
