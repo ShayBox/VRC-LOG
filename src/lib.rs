@@ -1,6 +1,6 @@
 use std::{
     fs::File,
-    io::{Error, Read},
+    io::{BufRead, BufReader, Error},
     path::{Path, PathBuf},
 };
 
@@ -92,25 +92,29 @@ pub fn parse_path_env(haystack: &str) -> Result<PathBuf, Error> {
     Ok(path)
 }
 
-/// # Errors
-///
-/// Will return `Err` if `File::open` or `File::read_to_end` errors
-pub fn parse_avatar_ids(path: PathBuf) -> Result<Vec<String>, Error> {
+#[must_use]
+pub fn parse_avatar_ids(path: &PathBuf) -> Vec<String> {
     lazy_static! {
         static ref RE: Regex = Regex::new(r"avtr_\w{8}-\w{4}-\w{4}-\w{4}-\w{12}").unwrap();
     }
 
-    let mut file = File::open(path)?;
-    let mut buf = vec![];
-    file.read_to_end(&mut buf)?;
+    let Ok(file) = File::open(path) else {
+        return Vec::new(); // Directory
+    };
 
-    let haystack = String::from_utf8_lossy(&buf);
-    let avatar_ids = RE
-        .find_iter(&haystack)
-        .map(|m| m.as_str().into())
-        .collect::<Vec<_>>();
+    let mut reader = BufReader::new(file);
+    let mut avatar_ids = Vec::new();
+    let mut buf = Vec::new();
 
-    Ok(avatar_ids)
+    while reader.read_until(b'\n', &mut buf).unwrap_or(0) > 0 {
+        let line = String::from_utf8_lossy(&buf);
+        for mat in RE.find_iter(&line) {
+            avatar_ids.push(mat.as_str().to_string());
+        }
+        buf.clear();
+    }
+
+    avatar_ids
 }
 
 pub fn print_colorized(avatar_id: &str) {

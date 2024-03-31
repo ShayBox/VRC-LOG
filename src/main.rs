@@ -35,10 +35,7 @@ fn main() -> anyhow::Result<()> {
 
     let (_tx, rx, _pw) = vrc_log::watch(config.cache_directory)?;
     while let Ok(path) = rx.recv() {
-        let Ok(avatar_ids) = vrc_log::parse_avatar_ids(path) else {
-            continue;
-        };
-
+        let avatar_ids = vrc_log::parse_avatar_ids(&path);
         for avatar_id in avatar_ids {
             #[cfg(feature = "cache")] // Avatar is already in cache
             if !cache.check_avatar_id(&avatar_id).unwrap_or(true) {
