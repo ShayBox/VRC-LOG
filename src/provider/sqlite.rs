@@ -1,7 +1,10 @@
 use anyhow::Result;
 use sqlite::Connection;
 
-use crate::{config::DEFAULT_PATH, provider::Provider};
+use crate::{
+    provider::{Provider, Type},
+    vrchat::VRCHAT_PATH,
+};
 
 pub struct Sqlite {
     connection: Connection,
@@ -12,12 +15,19 @@ impl Sqlite {
     ///
     /// Will return `Err` if `sqlite::open` errors
     pub fn new() -> Result<Self> {
-        let path = DEFAULT_PATH.join("avatars.sqlite");
+        let path = VRCHAT_PATH.join("avatars.sqlite");
         let connection = sqlite::open(path)?;
 
         // Create the table if it doesn't exist
         let query = "CREATE TABLE avatars (id TEXT PRIMARY KEY)";
-        let _ = connection.execute(query);
+        if connection.execute(query).is_err() {
+            // Print cache statistics
+            let query = "SELECT * FROM avatars";
+            if let Ok(statement) = connection.prepare(query) {
+                let rows = statement.into_iter().filter_map(Result::ok);
+                println!("[{}] {} Cached Avatars", Type::Cache, rows.count());
+            }
+        }
 
         Ok(Self { connection })
     }

@@ -18,10 +18,10 @@ use regex::{Captures, Regex};
 
 use crate::provider::{prelude::*, Providers, Type};
 
-pub mod config;
 #[cfg(feature = "discord")]
 pub mod discord;
 pub mod provider;
+pub mod vrchat;
 
 pub const CARGO_PKG_VERSION: &str = env!("CARGO_PKG_VERSION");
 pub const CARGO_PKG_HOMEPAGE: &str = env!("CARGO_PKG_HOMEPAGE");
@@ -168,13 +168,13 @@ pub fn process_avatars((_tx, rx, _): WatchResponse) -> anyhow::Result<()> {
 ///
 /// Will panic if an environment variable doesn't exist
 pub fn parse_path_env(haystack: &str) -> Result<PathBuf, Error> {
-    lazy_static! {
-        static ref RE: Regex = Regex::new(r"%(\w+)%").unwrap();
+    lazy_static! { // This is the best regex I could come up with
+        static ref RE: Regex = Regex::new(r"(\$|%)(\w+)%?").unwrap();
     }
 
     let str = RE.replace_all(haystack, |captures: &Captures| {
-        let key = &captures[1];
-        std::env::var(key).expect("Environment Variable not found")
+        let key = &captures[2];
+        std::env::var(key).unwrap_or_else(|_| panic!("Environment Variable not found: {key}"))
     });
     let path = std::fs::canonicalize(str.as_ref())?;
 

@@ -22,6 +22,9 @@ pub struct VRCDB {
 impl VRCDB {
     #[must_use]
     pub const fn new(client: Client, userid: String) -> Self {
+        // TODO: Print VRCDB Statistics
+        // Waiting on VRCDB Leaderboard
+
         Self { client, userid }
     }
 
@@ -32,7 +35,7 @@ impl VRCDB {
         eprintln!("2. VRC-LOG was restarted too quickly.\n");
         eprintln!("The User ID will default to the developer: ShayBox");
 
-        DEVELOPER_ID.to_owned()
+        std::env::var("DISCORD").unwrap_or_else(|_| DEVELOPER_ID.to_owned())
     }
 }
 
@@ -45,7 +48,7 @@ impl Default for VRCDB {
                 eprintln!("Vesktop & arRPC do not support fetching user info.");
                 eprintln!("The User ID will default to the developer: ShayBox");
 
-                DEVELOPER_ID.to_owned()
+                std::env::var("DISCORD").unwrap_or_else(|_| DEVELOPER_ID.to_owned())
             } else {
                 if let Some(username) = user.username {
                     println!("[{}] Authenticated as {username}", Type::VRCDB);

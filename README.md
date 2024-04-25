@@ -15,9 +15,9 @@ VRChat Local Cache Avatar ID Logger
 This project does **NOT** rip or steal avatars, it just scans your local cache for avatar ids and sends them to avatar database providers
 
 ### Steam Support
-This program supports Steam Launch Options  
-Place the file within the VRChat directory and set your launch options
-`vrc-log.exe %command%` or `/home/.../.cargo/bin/vrc-log %command%`
+This program supports Steam Launch Options (headless)  
+Place the file in the VRChat directory or PATH and set your launch options  
+`vrc-log(.exe) %command%`
 
 ### VRCX Support
 This program prints [VRCX] avatar links when a new (to you) avatar is found  
@@ -31,7 +31,7 @@ You can place a **shortcut** to this program within the [VRCX] Auto-Launch Folde
 
 Additional providers are welcome, please open an issue, pull request, or join Discord
 
-[Avatar Search]: ttps://sites.smokes-hub.de
+[Avatar Search]: https://sites.smokes-hub.de
 [Just H Party (Web & VRCX)]: https://avtr.just-h.party
 [Prismic's Avatar Search (World)]: https://vrchat.com/home/world/wrld_57514404-7f4e-4aee-a50a-57f55d3084bf
 [VRCX]: https://github.com/vrcx-team/VRCX?tab=readme-ov-file#--vrcx
