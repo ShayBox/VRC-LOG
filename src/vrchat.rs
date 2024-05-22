@@ -21,7 +21,7 @@ lazy_static::lazy_static! {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct VRChat {
     /// This is actually the path to the cache parent directory
-    /// VRChat doesn't allow you to change the cache directory name
+    /// `VRChat` doesn't allow you to change the cache directory name
     /// The `Cache-WindowsPlayer` path is appended during deserialization below
     #[serde(deserialize_with = "deserialize")]
     pub cache_directory: PathBuf,

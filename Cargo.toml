@@ -1,6 +1,6 @@
 [package]
 name = "vrc-log"
-version = "0.5.8"
+version = "0.6.0"
 authors = ["Shayne Hartford <shaybox@shaybox.com>"]
 edition = "2021"
 description = "VRChat Local Cache Avatar ID Logger"
@@ -15,7 +15,7 @@ categories = ["config", "database", "filesystem", "games", "parsing"]
 
 [dependencies]
 anyhow = "1"
-chrono = "0.4.32"
+chrono = "0.4"
 colored = "2"
 crossbeam = "0.8"
 crossterm = { version = "0.27", optional = true }
