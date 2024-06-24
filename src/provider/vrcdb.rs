@@ -46,6 +46,7 @@ impl Default for VRCDB {
             let userid = user.id.unwrap_or_else(Self::default);
             if userid == "1045800378228281345" {
                 eprintln!("Vesktop & arRPC do not support fetching user info.");
+                eprintln!("You can supply the 'DISCORD' env variable manually");
                 eprintln!("The User ID will default to the developer: ShayBox");
 
                 std::env::var("DISCORD").unwrap_or_else(|_| DEVELOPER_ID.to_owned())
@@ -68,7 +69,7 @@ impl Provider for VRCDB {
     }
 
     fn send_avatar_id(&self, avatar_id: &str) -> Result<bool> {
-        let status = self
+        let response = self
             .client
             .put("https://search.bs002.de/api/Avatar/putavatar")
             .header("User-Agent", USER_AGENT)
@@ -76,15 +77,25 @@ impl Provider for VRCDB {
                 ("id", avatar_id),
                 ("userid", &self.userid),
             ]))
-            .send()?
-            .status();
+            .send()?;
 
-        if status == 429 {
-            println!("[{}] 429 Rate Limit, Please Wait 1 Minute...", Type::VRCDB);
-            std::thread::sleep(Duration::from_secs(60));
-            self.send_avatar_id(avatar_id)
-        } else {
-            Ok(status == 201)
-        }
+        let status = response.status();
+        // println!("[{}] {status} | {}", Type::VRCDB, response.text()?);
+
+        let unique = match status.as_u16() {
+            200 => false,
+            404 => true,
+            429 => {
+                println!("[{}] 429 Rate Limit, Please Wait 1 Minute...", Type::VRCDB);
+                std::thread::sleep(Duration::from_secs(60));
+                self.send_avatar_id(avatar_id)?
+            }
+            code => {
+                println!("[{}] {code}", Type::VRCDB);
+                false
+            }
+        };
+
+        Ok(unique)
     }
 }
