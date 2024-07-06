@@ -66,7 +66,7 @@ impl Sqlite {
             // Print cache statistics
             if let Ok(statement) = connection.prepare("SELECT * FROM avatars") {
                 let rows = statement.into_iter().filter_map(Result::ok);
-                println!("[{}] {} Cached Avatars", Type::Cache, rows.count());
+                info!("[{}] {} Cached Avatars", Type::Cache, rows.count());
             }
         }
 

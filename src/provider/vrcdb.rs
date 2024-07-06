@@ -29,11 +29,11 @@ impl VRCDB {
     }
 
     fn default() -> String {
-        eprintln!("Error: Discord RPC Connection Failed\n");
-        eprintln!("This may be due to one of the following reasons:");
-        eprintln!("1. Discord is not running on your system.");
-        eprintln!("2. VRC-LOG was restarted too quickly.\n");
-        eprintln!("The User ID will default to the developer: ShayBox");
+        warn!("Error: Discord RPC Connection Failed\n");
+        warn!("This may be due to one of the following reasons:");
+        warn!("1. Discord is not running on your system.");
+        warn!("2. VRC-LOG was restarted too quickly.\n");
+        warn!("The User ID will default to the developer: ShayBox");
 
         std::env::var("DISCORD").unwrap_or_else(|_| DEVELOPER_ID.to_owned())
     }
@@ -45,14 +45,14 @@ impl Default for VRCDB {
         let userid = USER.clone().map_or_else(Self::default, |user| {
             let userid = user.id.unwrap_or_else(Self::default);
             if userid == "1045800378228281345" {
-                eprintln!("Vesktop & arRPC do not support fetching user info.");
-                eprintln!("You can supply the 'DISCORD' env variable manually");
-                eprintln!("The User ID will default to the developer: ShayBox");
+                warn!("Vesktop & arRPC doesn't support fetching user info");
+                warn!("You can supply the 'DISCORD' env variable manually");
+                warn!("The User ID will default to the developer: ShayBox");
 
                 std::env::var("DISCORD").unwrap_or_else(|_| DEVELOPER_ID.to_owned())
             } else {
                 if let Some(username) = user.username {
-                    println!("[{}] Authenticated as {username}", Type::VRCDB);
+                    info!("[{}] Authenticated as {username}", Type::VRCDB);
                 }
 
                 userid
@@ -80,18 +80,18 @@ impl Provider for VRCDB {
             .send()?;
 
         let status = response.status();
-        // println!("[{}] {status} | {}", Type::VRCDB, response.text()?);
+        debug!("[{}] {status} | {}", Type::VRCDB, response.text()?);
 
         let unique = match status.as_u16() {
-            200 => false,
-            404 => true,
+            200 | 404 => false,
+            201 => true,
             429 => {
-                println!("[{}] 429 Rate Limit, Please Wait 1 Minute...", Type::VRCDB);
+                warn!("[{}] 429 Rate Limit, Please Wait 1 Minute...", Type::VRCDB);
                 std::thread::sleep(Duration::from_secs(60));
                 self.send_avatar_id(avatar_id)?
             }
-            code => {
-                println!("[{}] {code}", Type::VRCDB);
+            _ => {
+                error!("[{}] {status}", Type::VRCDB);
                 false
             }
         };

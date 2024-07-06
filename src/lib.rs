@@ -1,3 +1,6 @@
+#[macro_use]
+extern crate tracing;
+
 use std::{
     env::Args,
     fs::File,
@@ -131,7 +134,6 @@ pub fn process_avatars((_tx, rx, _): WatchResponse) -> anyhow::Result<()> {
 
             #[cfg(feature = "cache")] // Don't send to cache if sending failed
             let mut send_to_cache = true;
-            let local_time = self::get_local_time();
 
             self::print_colorized(&avatar_id);
             std::thread::sleep(Duration::from_secs(3));
@@ -140,12 +142,12 @@ pub fn process_avatars((_tx, rx, _): WatchResponse) -> anyhow::Result<()> {
                 match provider.send_avatar_id(&avatar_id) {
                     Ok(unique) => {
                         if unique {
-                            println!("^ {local_time}: Successfully Submitted to {provider_type}");
+                            info!("^ Successfully Submitted to {provider_type}");
                         }
                     }
                     Err(error) => {
                         send_to_cache = false;
-                        eprintln!("^ {local_time}: Failed to submit to {provider_type}: {error}");
+                        error!("^ Failed to submit to {provider_type}: {error}");
                     }
                 }
             }
@@ -230,5 +232,5 @@ pub fn print_colorized(avatar_id: &str) {
     *INDEX.write() = (index + 1) % COLORS.len();
 
     let text = format!("vrcx://avatar/{avatar_id}").color(color);
-    println!("{text}");
+    info!("{text}");
 }
