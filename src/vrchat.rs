@@ -2,6 +2,7 @@ use std::{
     fs::File,
     io::{Error, Read, Seek},
     path::PathBuf,
+    sync::LazyLock,
 };
 
 use anyhow::Context;
@@ -13,10 +14,9 @@ const VRCHAT: &str = "%AppData%\\..\\LocalLow\\VRChat\\VRChat";
 #[cfg(target_os = "linux")]
 const VRCHAT: &str = "$HOME/.local/share/Steam/steamapps/compatdata/438100/pfx/drive_c/users/steamuser/AppData/LocalLow/VRChat/VRChat";
 
-lazy_static::lazy_static! {
-    /// This is a static path and cannot be changed (without symlinks)
-    pub static ref VRCHAT_PATH: PathBuf = crate::parse_path_env(VRCHAT).unwrap();
-}
+/// This is a static path and cannot be changed (without symlinks)
+pub static VRCHAT_PATH: LazyLock<PathBuf> =
+    LazyLock::new(|| crate::parse_path_env(VRCHAT).expect("Failed to parse default path"));
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct VRChat {

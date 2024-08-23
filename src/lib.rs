@@ -7,6 +7,7 @@ use std::{
     io::{BufRead, BufReader, Error},
     path::{Path, PathBuf},
     process::{Command, Stdio},
+    sync::LazyLock,
     time::Duration,
 };
 
@@ -14,10 +15,9 @@ use anyhow::{bail, Context};
 use chrono::Local;
 use colored::{Color, Colorize};
 use crossbeam::channel::{Receiver, Sender};
-use lazy_static::lazy_static;
+use lazy_regex::{lazy_regex, regex_replace_all, Lazy, Regex};
 use notify::{Config, Event, PollWatcher, RecursiveMode, Watcher};
 use parking_lot::RwLock;
-use regex::{Captures, Regex};
 
 use crate::provider::{prelude::*, Providers, Type};
 
@@ -169,25 +169,17 @@ pub fn process_avatars((_tx, rx, _): WatchResponse) -> anyhow::Result<()> {
 /// # Panics
 ///
 /// Will panic if an environment variable doesn't exist
-pub fn parse_path_env(haystack: &str) -> Result<PathBuf, Error> {
-    lazy_static! { // This is the best regex I could come up with
-        static ref RE: Regex = Regex::new(r"(\$|%)(\w+)%?").unwrap();
-    }
-
-    let str = RE.replace_all(haystack, |captures: &Captures| {
-        let key = &captures[2];
-        std::env::var(key).unwrap_or_else(|_| panic!("Environment Variable not found: {key}"))
+pub fn parse_path_env(path: &str) -> Result<PathBuf, Error> {
+    let path = regex_replace_all!(r"(?:\$|%)(\w+)%?", path, |_, env| {
+        std::env::var(env).unwrap_or_else(|_| panic!("Environment Variable not found: {env}"))
     });
-    let path = std::fs::canonicalize(str.as_ref())?;
 
-    Ok(path)
+    std::fs::canonicalize(path.as_ref())
 }
 
 #[must_use]
 pub fn parse_avatar_ids(path: &PathBuf) -> Vec<String> {
-    lazy_static! {
-        static ref RE: Regex = Regex::new(r"avtr_\w{8}-\w{4}-\w{4}-\w{4}-\w{12}").unwrap();
-    }
+    static RE: Lazy<Regex> = lazy_regex!(r"avtr_\w{8}-\w{4}-\w{4}-\w{4}-\w{12}");
 
     let Ok(file) = File::open(path) else {
         return Vec::new(); // Directory
@@ -209,9 +201,9 @@ pub fn parse_avatar_ids(path: &PathBuf) -> Vec<String> {
 }
 
 pub fn print_colorized(avatar_id: &str) {
-    lazy_static! {
-        static ref INDEX: RwLock<usize> = RwLock::new(0);
-        static ref COLORS: [Color; 12] = [
+    static INDEX: LazyLock<RwLock<usize>> = LazyLock::new(|| RwLock::new(0));
+    static COLORS: LazyLock<[Color; 12]> = LazyLock::new(|| {
+        [
             Color::Red,
             Color::BrightRed,
             Color::Yellow,
@@ -224,8 +216,8 @@ pub fn print_colorized(avatar_id: &str) {
             Color::BrightCyan,
             Color::Magenta,
             Color::BrightMagenta,
-        ];
-    }
+        ]
+    });
 
     let index = *INDEX.read();
     let color = COLORS[index];

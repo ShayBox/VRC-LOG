@@ -90,6 +90,12 @@ impl Provider for VRCDB {
                 std::thread::sleep(Duration::from_secs(60));
                 self.send_avatar_id(avatar_id)?
             }
+            500 => {
+                info!("[{}] {status}", Type::VRCDB);
+                info!("Pending submission to VRCDB");
+                debug!("New Avatars can take up to a day to be processed");
+                true
+            }
             _ => {
                 error!("[{}] {status}", Type::VRCDB);
                 false
