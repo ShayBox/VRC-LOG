@@ -6,13 +6,12 @@ use crate::{
     vrchat::VRCHAT_PATH,
 };
 
-pub struct Sqlite {
+pub struct Cache {
     connection: Connection,
 }
 
-impl Sqlite {
+impl Cache {
     /// # Errors
-    ///
     /// Will return `Err` if `sqlite::open` errors
     pub fn new() -> Result<Self> {
         let path = VRCHAT_PATH.join("avatars.sqlite");
@@ -59,14 +58,14 @@ impl Sqlite {
             #[rustfmt::skip] // Prevent a large burst after updating
             connection.execute("
                 UPDATE avatars
-                SET updated_at = datetime('now', '-31 days') 
+                SET updated_at = datetime('now', '-31 days')
                 WHERE updated_at IS NULL
             ")?;
 
             // Print cache statistics
             if let Ok(statement) = connection.prepare("SELECT * FROM avatars") {
                 let rows = statement.into_iter().filter_map(Result::ok);
-                info!("[{}] {} Cached Avatars", Type::Cache, rows.count());
+                info!("[{}] {} Cached Avatars", Type::CACHE, rows.count());
             }
         }
 
@@ -74,7 +73,7 @@ impl Sqlite {
     }
 }
 
-impl Provider for Sqlite {
+impl Provider for Cache {
     fn check_avatar_id(&self, avatar_id: &str) -> Result<bool> {
         let query = "
             SELECT 1 FROM avatars

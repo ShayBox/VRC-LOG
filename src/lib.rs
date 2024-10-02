@@ -28,6 +28,11 @@ pub mod vrchat;
 
 pub const CARGO_PKG_VERSION: &str = env!("CARGO_PKG_VERSION");
 pub const CARGO_PKG_HOMEPAGE: &str = env!("CARGO_PKG_HOMEPAGE");
+pub const USER_AGENT: &str = concat!(
+    "VRC-LOG/",
+    env!("CARGO_PKG_VERSION"),
+    " shaybox@shaybox.com"
+);
 
 pub type WatchResponse = (Sender<PathBuf>, Receiver<PathBuf>, PollWatcher);
 
@@ -37,7 +42,6 @@ pub fn get_local_time() -> String {
 }
 
 /// # Errors
-///
 /// Will return `Err` if couldn't get the GitHub repository
 pub fn check_for_updates() -> reqwest::Result<bool> {
     let response = reqwest::blocking::get(CARGO_PKG_HOMEPAGE)?;
@@ -53,7 +57,6 @@ pub fn check_for_updates() -> reqwest::Result<bool> {
 }
 
 /// # Errors
-///
 /// Will return `Err` if `PollWatcher::watch` errors
 pub fn watch<P: AsRef<Path>>(path: P) -> notify::Result<WatchResponse> {
     let (tx_a, rx_a) = crossbeam::channel::unbounded();
@@ -83,11 +86,8 @@ pub fn watch<P: AsRef<Path>>(path: P) -> notify::Result<WatchResponse> {
 /// Steam Game Launch Options: `.../vrc-log(.exe) %command%`
 ///
 /// # Errors
-///
 /// Will return `Err` if `Command::spawn` errors
-///
 /// # Panics
-///
 /// Will panic if `Child::wait` panics
 pub fn launch_game(args: Args) -> anyhow::Result<()> {
     let args = args.collect::<Vec<_>>();
@@ -108,21 +108,26 @@ pub fn launch_game(args: Args) -> anyhow::Result<()> {
 }
 
 /// # Errors
-///
 /// Will return `Err` if `Sqlite::new` or `Provider::send_avatar_id` errors
 pub fn process_avatars((_tx, rx, _): WatchResponse) -> anyhow::Result<()> {
     #[cfg_attr(not(feature = "cache"), allow(unused_mut))]
     let mut providers = Providers::from([
-        #[cfg(all(feature = "cache", feature = "sqlite"))]
-        (Type::Cache, box_db!(Sqlite::new()?)),
+        #[cfg(feature = "cache")]
+        (Type::CACHE, box_db!(Cache::new()?)),
+        #[cfg(feature = "avtrdb")]
+        (Type::AVTRDB, box_db!(AvtrDB::default())),
+        #[cfg(feature = "doughnut")]
+        (Type::DOUGHNUT, box_db!(Doughnut::default())),
+        #[cfg(feature = "jeff")]
+        (Type::JEFF, box_db!(Jeff::default())),
+        #[cfg(feature = "neko")]
+        (Type::NEKO, box_db!(Neko::default())),
         #[cfg(feature = "vrcdb")]
         (Type::VRCDB, box_db!(VRCDB::default())),
-        #[cfg(all(feature = "sqlite", not(feature = "cache")))]
-        (Type::Sqlite, box_db!(Sqlite::new()?)),
     ]);
 
     #[cfg(feature = "cache")]
-    let cache = providers.shift_remove(&Type::Cache).context("None")?;
+    let cache = providers.shift_remove(&Type::CACHE).context("None")?;
 
     while let Ok(path) = rx.recv() {
         let avatar_ids = self::parse_avatar_ids(&path);
@@ -163,11 +168,9 @@ pub fn process_avatars((_tx, rx, _): WatchResponse) -> anyhow::Result<()> {
 }
 
 /// # Errors
-///
 /// Will return `Err` if `std::fs::canonicalize` errors
 ///
 /// # Panics
-///
 /// Will panic if an environment variable doesn't exist
 pub fn parse_path_env(path: &str) -> Result<PathBuf, Error> {
     let path = regex_replace_all!(r"(?:\$|%)(\w+)%?", path, |_, env| {

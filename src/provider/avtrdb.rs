@@ -8,12 +8,12 @@ use crate::{
     USER_AGENT,
 };
 
-pub struct VRCDB {
+pub struct AvtrDB {
     client: Client,
     userid: String,
 }
 
-impl Default for VRCDB {
+impl Default for AvtrDB {
     fn default() -> Self {
         Self {
             client: Client::default(),
@@ -22,7 +22,7 @@ impl Default for VRCDB {
     }
 }
 
-impl Provider for VRCDB {
+impl Provider for AvtrDB {
     fn check_avatar_id(&self, _avatar_id: &str) -> Result<bool> {
         bail!("Cache Only")
     }
@@ -30,7 +30,7 @@ impl Provider for VRCDB {
     fn send_avatar_id(&self, avatar_id: &str) -> Result<bool> {
         let response = self
             .client
-            .put("https://search.bs002.de/api/Avatar/putavatar")
+            .put("...")
             .header("User-Agent", USER_AGENT)
             .json(&HashMap::from([
                 ("id", avatar_id),
@@ -39,24 +39,18 @@ impl Provider for VRCDB {
             .send()?;
 
         let status = response.status();
-        let text = response.text()?;
-        debug!("[{}] {status} | {text}", Type::VRCDB);
+        debug!("[{}] {status} | {}", Type::AvtrDB, response.text()?);
 
         let unique = match status.as_u16() {
-            200 => false,
-            404 => true,
+            200 | 404 => false,
+            201 => true,
             429 => {
-                warn!("[{}] 429 Rate Limit, Please Wait 1 Minute...", Type::VRCDB);
+                warn!("[{}] 429 Rate Limit, Please Wait 1 Minute...", Type::AvtrDB);
                 std::thread::sleep(Duration::from_secs(60));
                 self.send_avatar_id(avatar_id)?
             }
-            500 => {
-                info!("^ Pending in Queue: {}", Type::VRCDB);
-                debug!("New Avatars can take up to a day to be processed");
-                true
-            }
             _ => {
-                error!("[{}] {status} | {text}", Type::VRCDB);
+                error!("[{}] {status}", Type::AvtrDB);
                 false
             }
         };

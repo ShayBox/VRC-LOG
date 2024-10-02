@@ -2,35 +2,49 @@ use anyhow::Result;
 use indexmap::IndexMap;
 use strum::Display;
 
-pub mod prelude;
-#[cfg(feature = "sqlite")]
-pub mod sqlite;
+#[cfg(feature = "avtrdb")]
+pub mod avtrdb;
+#[cfg(feature = "cache")]
+pub mod cache;
+#[cfg(feature = "doughnut")]
+pub mod doughnut;
+#[cfg(feature = "jeff")]
+pub mod jeff;
+#[cfg(feature = "neko")]
+pub mod neko;
 #[cfg(feature = "vrcdb")]
 pub mod vrcdb;
 
+pub mod prelude;
+
 #[derive(Display, Eq, Hash, PartialEq)]
 pub enum Type {
+    #[cfg(feature = "avtrdb")]
+    AVTRDB,
     #[cfg(feature = "cache")]
-    Cache,
-    #[cfg(feature = "sqlite")]
-    Sqlite,
+    CACHE,
+    #[cfg(feature = "doughnut")]
+    DOUGHNUT,
+    #[cfg(feature = "jeff")]
+    JEFF,
+    #[cfg(feature = "neko")]
+    NEKO,
     #[cfg(feature = "vrcdb")]
-    #[strum(to_string = "Avatar Search")]
     VRCDB,
 }
 
 pub trait Provider {
+    /// # Check if the avatar ID is unique or not (Cache Only)
     /// True: New/Unique | False: Duplicate/Existing
     ///
     /// # Errors
-    ///
     /// Will return `Err` if anything errors
     fn check_avatar_id(&self, avatar_id: &str) -> Result<bool>;
 
+    /// # Send avatar ID to the provider
     /// True: New/Unique | False: Duplicate/Existing
     ///
     /// # Errors
-    ///
     /// Will return `Err` if anything errors
     fn send_avatar_id(&self, avatar_id: &str) -> Result<bool>;
 }

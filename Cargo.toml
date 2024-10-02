@@ -1,6 +1,6 @@
 [package]
 name = "vrc-log"
-version = "0.7.1"
+version = "0.8.0"
 authors = ["Shayne Hartford <shaybox@shaybox.com>"]
 edition = "2021"
 description = "VRChat Local Cache Avatar ID Logger"
@@ -15,6 +15,7 @@ categories = ["config", "database", "filesystem", "games", "parsing"]
 
 [dependencies]
 anyhow = "1"
+cached = { version = "0.53", optional = true }
 chrono = "0.4"
 colored = "2"
 crossbeam = "0.8"
@@ -35,11 +36,18 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "time"] }
 
 [features]
-default = ["cache", "sqlite", "title", "vrcdb"]
-cache = []
-discord = ["dep:discord-presence"]
-sqlite = ["dep:sqlite"]
+default = ["cache", "title", "doughnut", "neko", "vrcdb"]
+# default = ["cache", "title", "avtrdb", "doughnut", "jeff", "neko", "vrcdb"]
+
+discord = ["dep:discord-presence", "dep:cached"]
 title = ["dep:crossterm"]
+
+# VRChat Avatar Database Providers
+avtrdb = ["dep:reqwest", "discord"]
+cache = ["dep:sqlite"]
+doughnut = ["dep:reqwest", "discord"]
+jeff = ["dep:reqwest", "discord"]
+neko = ["dep:reqwest", "discord"]
 vrcdb = ["dep:reqwest", "discord"]
 
 # https://github.com/johnthagen/min-sized-rust

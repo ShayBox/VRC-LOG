@@ -1,4 +1,4 @@
-use std::{collections::HashMap, time::Duration};
+use std::collections::HashMap;
 
 use anyhow::{bail, Result};
 use reqwest::blocking::Client;
@@ -8,12 +8,12 @@ use crate::{
     USER_AGENT,
 };
 
-pub struct VRCDB {
+pub struct Neko {
     client: Client,
     userid: String,
 }
 
-impl Default for VRCDB {
+impl Default for Neko {
     fn default() -> Self {
         Self {
             client: Client::default(),
@@ -22,7 +22,7 @@ impl Default for VRCDB {
     }
 }
 
-impl Provider for VRCDB {
+impl Provider for Neko {
     fn check_avatar_id(&self, _avatar_id: &str) -> Result<bool> {
         bail!("Cache Only")
     }
@@ -30,7 +30,7 @@ impl Provider for VRCDB {
     fn send_avatar_id(&self, avatar_id: &str) -> Result<bool> {
         let response = self
             .client
-            .put("https://search.bs002.de/api/Avatar/putavatar")
+            .post("https://avtr.nekosunevr.co.uk/v1/vrchat/avatars/store/putavatarExternal")
             .header("User-Agent", USER_AGENT)
             .json(&HashMap::from([
                 ("id", avatar_id),
@@ -40,23 +40,13 @@ impl Provider for VRCDB {
 
         let status = response.status();
         let text = response.text()?;
-        debug!("[{}] {status} | {text}", Type::VRCDB);
+        debug!("[{}] {status} | {text}", Type::NEKO);
 
         let unique = match status.as_u16() {
             200 => false,
             404 => true,
-            429 => {
-                warn!("[{}] 429 Rate Limit, Please Wait 1 Minute...", Type::VRCDB);
-                std::thread::sleep(Duration::from_secs(60));
-                self.send_avatar_id(avatar_id)?
-            }
-            500 => {
-                info!("^ Pending in Queue: {}", Type::VRCDB);
-                debug!("New Avatars can take up to a day to be processed");
-                true
-            }
             _ => {
-                error!("[{}] {status} | {text}", Type::VRCDB);
+                error!("[{}] {status} | {text}", Type::NEKO);
                 false
             }
         };

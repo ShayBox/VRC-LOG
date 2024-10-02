@@ -30,7 +30,6 @@ pub struct VRChat {
 /// Try to deserialize the `VRChat` `config.json` `cache_directory`, `parse_path_env`, and append `Cache-WindowsPlayer`
 ///
 /// # Errors
-///
 /// Will return `Err` if `crate::parse_path_env` errors
 pub fn deserialize<'de, D: Deserializer<'de>>(deserializer: D) -> Result<PathBuf, D::Error> {
     let haystack = String::deserialize(deserializer)?;
@@ -51,7 +50,6 @@ impl VRChat {
     /// Try to load the `VRChat` `config.json` file for the `cache_directory` field
     ///
     /// # Errors
-    ///
     /// Will return `Err` if `File::open`, `File::read_to_string`, or `File::rewind` errors
     pub fn load() -> Result<Self, Error> {
         let path = Self::get_path();
