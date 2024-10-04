@@ -41,7 +41,7 @@ Place the file in the VRChat directory or `PATH` and set your launch options
 Additional providers are welcome, please open an issue, pull request, or join Discord
 
 [AVTRDB]: https://avtrdb.com
-[DOUGHNUT]: https://avtr.nekosunevr.co.uk
+[DOUGHNUT]: https://avtr1.nekosunevr.co.uk
 [JEFF]: https://avtr.frensmp.cc
 [Just H Party]: https://avtr.just-h.party
 [NEKO]: https://avtr.nekosunevr.co.uk
