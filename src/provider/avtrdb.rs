@@ -39,20 +39,18 @@ impl Provider for AvtrDB {
             .send()?;
 
         let status = response.status();
-        debug!("[{}] {status} | {}", Type::AvtrDB, response.text()?);
+        let text = response.text()?;
+        debug!("[{}] {status} | {text}", Type::AVTRDB);
 
         let unique = match status.as_u16() {
             200 | 404 => false,
             201 => true,
             429 => {
-                warn!("[{}] 429 Rate Limit, Please Wait 1 Minute...", Type::AvtrDB);
+                warn!("[{}] 429 Rate Limit, Please Wait 1 Minute...", Type::AVTRDB);
                 std::thread::sleep(Duration::from_secs(60));
                 self.send_avatar_id(avatar_id)?
             }
-            _ => {
-                error!("[{}] {status}", Type::AvtrDB);
-                false
-            }
+            _ => bail!("[{}] {status} | {text}", Type::AVTRDB),
         };
 
         Ok(unique)

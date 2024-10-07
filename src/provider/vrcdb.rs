@@ -55,10 +55,7 @@ impl Provider for VRCDB {
                 debug!("New Avatars can take up to a day to be processed");
                 true
             }
-            _ => {
-                error!("[{}] {status} | {text}", Type::VRCDB);
-                false
-            }
+            _ => bail!("[{}] {status} | {text}", Type::VRCDB),
         };
 
         Ok(unique)

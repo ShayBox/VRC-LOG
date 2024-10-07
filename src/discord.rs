@@ -51,13 +51,12 @@ pub fn get_dev_id() -> String {
 #[once(option = true, sync_writes = true)]
 pub fn get_user_id() -> Option<String> {
     let discord = Discord::start();
-    let user = discord.user.lock().clone();
 
-    // block_until_event will never timeout
+    // block_until_event will never time out
     std::thread::sleep(Duration::from_secs(5));
     discord.client.shutdown().ok()?;
 
-    Some(match user {
+    let user_id = match discord.user.lock().clone() {
         None => get_dev_id(),
         Some(user) => {
             let userid = user.id.unwrap_or_else(get_dev_id);
@@ -75,5 +74,7 @@ pub fn get_user_id() -> Option<String> {
                 userid
             }
         }
-    })
+    };
+
+    Some(user_id)
 }

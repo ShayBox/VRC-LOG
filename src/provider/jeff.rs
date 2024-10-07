@@ -45,10 +45,7 @@ impl Provider for Jeff {
         let unique = match status.as_u16() {
             200 => false,
             404 => true,
-            _ => {
-                error!("[{}] {status} | {text}", Type::JEFF);
-                false
-            }
+            _ => bail!("[{}] {status} | {text}", Type::JEFF),
         };
 
         Ok(unique)

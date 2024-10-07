@@ -45,10 +45,7 @@ impl Provider for Doughnut {
         let unique = match status.as_u16() {
             200 => false,
             404 => true,
-            _ => {
-                error!("[{}] {status} | {text}", Type::DOUGHNUT);
-                false
-            }
+            _ => bail!("[{}] {status} | {text}", Type::DOUGHNUT),
         };
 
         Ok(unique)

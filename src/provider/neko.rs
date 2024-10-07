@@ -45,10 +45,7 @@ impl Provider for Neko {
         let unique = match status.as_u16() {
             200 => false,
             404 => true,
-            _ => {
-                error!("[{}] {status} | {text}", Type::NEKO);
-                false
-            }
+            _ => bail!("[{}] {status} | {text}", Type::NEKO),
         };
 
         Ok(unique)
