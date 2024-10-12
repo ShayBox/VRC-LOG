@@ -4,8 +4,6 @@ pub use super::avtrdb::AvtrDB;
 pub use super::cache::Cache;
 #[cfg(feature = "doughnut")]
 pub use super::doughnut::Doughnut;
-#[cfg(feature = "jeff")]
-pub use super::jeff::Jeff;
 #[cfg(feature = "neko")]
 pub use super::neko::Neko;
 #[cfg(feature = "vrcdb")]

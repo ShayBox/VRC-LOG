@@ -37,7 +37,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter", "time"] }
 
 [features]
 default = ["cache", "title", "doughnut", "neko", "vrcdb"]
-# default = ["cache", "title", "avtrdb", "doughnut", "jeff", "neko", "vrcdb"]
+# default = ["cache", "title", "avtrdb", "doughnut", "neko", "vrcdb"]
 
 discord = ["dep:discord-presence", "dep:cached"]
 title = ["dep:crossterm"]
@@ -46,7 +46,6 @@ title = ["dep:crossterm"]
 avtrdb = ["dep:reqwest", "discord"]
 cache = ["dep:sqlite"]
 doughnut = ["dep:reqwest", "discord"]
-jeff = ["dep:reqwest", "discord"]
 neko = ["dep:reqwest", "discord"]
 vrcdb = ["dep:reqwest", "discord"]
 

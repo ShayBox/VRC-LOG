@@ -118,8 +118,6 @@ pub fn process_avatars((_tx, rx, _): WatchResponse) -> anyhow::Result<()> {
         (Type::AVTRDB, box_db!(AvtrDB::default())),
         #[cfg(feature = "doughnut")]
         (Type::DOUGHNUT, box_db!(Doughnut::default())),
-        #[cfg(feature = "jeff")]
-        (Type::JEFF, box_db!(Jeff::default())),
         #[cfg(feature = "neko")]
         (Type::NEKO, box_db!(Neko::default())),
         #[cfg(feature = "vrcdb")]
@@ -130,7 +128,7 @@ pub fn process_avatars((_tx, rx, _): WatchResponse) -> anyhow::Result<()> {
     let cache = providers.shift_remove(&Type::CACHE).context("None")?;
 
     while let Ok(path) = rx.recv() {
-        let avatar_ids = self::parse_avatar_ids(&path);
+        let avatar_ids = parse_avatar_ids(&path);
         for avatar_id in avatar_ids {
             #[cfg(feature = "cache")] // Avatar is already in cache
             if !cache.check_avatar_id(&avatar_id).unwrap_or(true) {
@@ -140,7 +138,7 @@ pub fn process_avatars((_tx, rx, _): WatchResponse) -> anyhow::Result<()> {
             #[cfg(feature = "cache")] // Don't send to cache if sending failed
             let mut send_to_cache = true;
 
-            self::print_colorized(&avatar_id);
+            print_colorized(&avatar_id);
             std::thread::sleep(Duration::from_secs(3));
 
             for (provider_type, provider) in &providers {

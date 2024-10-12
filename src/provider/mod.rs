@@ -8,8 +8,6 @@ pub mod avtrdb;
 pub mod cache;
 #[cfg(feature = "doughnut")]
 pub mod doughnut;
-#[cfg(feature = "jeff")]
-pub mod jeff;
 #[cfg(feature = "neko")]
 pub mod neko;
 #[cfg(feature = "vrcdb")]
@@ -25,8 +23,6 @@ pub enum Type {
     CACHE,
     #[cfg(feature = "doughnut")]
     DOUGHNUT,
-    #[cfg(feature = "jeff")]
-    JEFF,
     #[cfg(feature = "neko")]
     NEKO,
     #[cfg(feature = "vrcdb")]
