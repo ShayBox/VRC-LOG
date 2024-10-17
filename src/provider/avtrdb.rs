@@ -1,7 +1,7 @@
-use std::{collections::HashMap, time::Duration};
+use std::{time::Duration, vec};
 
 use anyhow::{bail, Result};
-use reqwest::blocking::Client;
+use reqwest::{blocking::Client, StatusCode, Url};
 
 use crate::{
     provider::{Provider, Type},
@@ -9,50 +9,108 @@ use crate::{
 };
 
 pub struct AvtrDB {
-    client: Client,
-    userid: String,
+    client:      Client,
+    attribution: Option<String>,
+    base_url:    Url,
 }
 
-impl Default for AvtrDB {
-    fn default() -> Self {
+const AVTRDB_URL: &str = "https://api.avtrdb.com/v1/";
+
+impl AvtrDB {
+    #[must_use]
+    pub fn new(attribution: Option<String>, base_url: Url) -> Self {
         Self {
-            client: Client::default(),
-            userid: crate::discord::get_user_id().unwrap(),
+            attribution,
+            base_url,
+            ..Default::default()
         }
     }
 }
 
-impl Provider for AvtrDB {
-    fn check_avatar_id(&self, _avatar_id: &str) -> Result<bool> {
-        bail!("Cache Only")
+impl Default for AvtrDB {
+    fn default() -> Self {
+        // Only alphanumeric strings up to 30 characters or nothing are allowed
+        // if these conditions are not met, the given avatars will not be ingested
+        let attribution = std::env::var("AVTRDB_ATTRIBUTION")
+            .ok()
+            .or_else(crate::discord::get_user_id);
+        Self {
+            client: Client::builder()
+                .timeout(Duration::from_secs(10))
+                .user_agent(USER_AGENT)
+                .build()
+                .unwrap(),
+            attribution,
+            base_url: Url::parse(AVTRDB_URL).unwrap(),
+        }
     }
+}
 
-    fn send_avatar_id(&self, avatar_id: &str) -> Result<bool> {
-        let response = self
-            .client
-            .put("...")
-            .header("User-Agent", USER_AGENT)
-            .json(&HashMap::from([
-                ("id", avatar_id),
-                ("userid", &self.userid),
-            ]))
-            .send()?;
+#[derive(Debug, serde::Serialize)]
+struct AvtrDBRequest {
+    avatar_ids:  Vec<String>,
+    attribution: Option<String>,
+}
 
+#[derive(Debug, serde::Deserialize)]
+struct AvtrDBResponse {
+    valid_avatar_ids: u64,
+}
+
+#[derive(Debug, serde::Deserialize)]
+struct AvtrDBSearchResponse {
+    avatars: Vec<serde_json::Value>,
+}
+
+impl Provider for AvtrDB {
+    fn check_avatar_id(&self, avatar_id: &str) -> Result<bool> {
+        let mut url = self.base_url.join("avatar/search")?;
+        url.set_query(Some(format!("query={avatar_id}").as_str()));
+        let response = self.client.get(url).send()?;
         let status = response.status();
         let text = response.text()?;
         debug!("[{}] {status} | {text}", Type::AVTRDB);
+        if status != StatusCode::OK {
+            bail!(
+                "[{}] Failed to check avatar: {status} | {text}",
+                Type::AVTRDB
+            );
+        }
+        let data = serde_json::from_str::<AvtrDBSearchResponse>(&text)?;
 
-        let unique = match status.as_u16() {
-            200 | 404 => false,
-            201 => true,
-            429 => {
-                warn!("[{}] 429 Rate Limit, Please Wait 1 Minute...", Type::AVTRDB);
-                std::thread::sleep(Duration::from_secs(60));
-                self.send_avatar_id(avatar_id)?
-            }
-            _ => bail!("[{}] {status} | {text}", Type::AVTRDB),
+        Ok(data.avatars.len() == 1)
+    }
+
+    // The API supports batching, but this interface does not
+    // FIXME: adapt ProviderTrait to support batching
+    fn send_avatar_id(&self, avatar_id: &str) -> Result<bool> {
+        let request = AvtrDBRequest {
+            avatar_ids:  vec![avatar_id.to_string()],
+            attribution: self.attribution.clone(),
         };
 
-        Ok(unique)
+        debug!(
+            "[{}] Sending {:#?}",
+            Type::AVTRDB,
+            serde_json::to_string(&request)?
+        );
+
+        let response = self
+            .client
+            .post(self.base_url.join("avatar/ingest")?)
+            .json(&request)
+            .send()?;
+        let status = response.status();
+        let text = response.text()?;
+        let data = serde_json::from_str::<AvtrDBResponse>(&text)?;
+        debug!("[{}] {status} | {text}", Type::AVTRDB);
+
+        match status {
+            StatusCode::OK => Ok(data.valid_avatar_ids == 1),
+            StatusCode::TOO_MANY_REQUESTS => {
+                bail!("[{}] 429 Rate Limit, try again in 10 seconds", Type::AVTRDB)
+            }
+            _ => bail!("[{}] Unknown Error: {status} | {text}", Type::AVTRDB),
+        }
     }
 }
