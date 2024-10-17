@@ -29,7 +29,7 @@ impl AvtrDB {
 
 impl Default for AvtrDB {
     fn default() -> Self {
-        // Only discord snowflake ids or strings that comply with RFC1123 or nothing are allowed
+        // Only alphanumeric strings up to 30 characters or nothing are allowed
         // if these conditions are not met, the given avatars will not be ingested
         let attribution = std::env::var("AVTRDB_ATTRIBUTION")
             .ok()
