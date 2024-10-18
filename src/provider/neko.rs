@@ -2,11 +2,13 @@ use std::collections::HashMap;
 
 use anyhow::{bail, Result};
 use reqwest::blocking::Client;
-
+use reqwest::StatusCode;
 use crate::{
     provider::{Provider, Type},
     USER_AGENT,
 };
+
+const URL: &str = "https://avtr.nekosunevr.co.uk/v1/vrchat/avatars/store/putavatarExternal";
 
 pub struct Neko {
     client: Client,
@@ -30,7 +32,7 @@ impl Provider for Neko {
     fn send_avatar_id(&self, avatar_id: &str) -> Result<bool> {
         let response = self
             .client
-            .post("https://avtr.nekosunevr.co.uk/v1/vrchat/avatars/store/putavatarExternal")
+            .post(URL)
             .header("User-Agent", USER_AGENT)
             .json(&HashMap::from([
                 ("id", avatar_id),
@@ -42,9 +44,9 @@ impl Provider for Neko {
         let text = response.text()?;
         debug!("[{}] {status} | {text}", Type::NEKO);
 
-        let unique = match status.as_u16() {
-            200 => false,
-            404 => true,
+        let unique = match status {
+            StatusCode::OK => false,
+            StatusCode::NOT_FOUND => true,
             _ => bail!("[{}] {status} | {text}", Type::NEKO),
         };
 

@@ -27,7 +27,7 @@ Place the file in the VRChat directory or `PATH` and set your launch options
 `vrc-log(.exe) %command%`
 
 ### Supported Avatar Database Providers
-<!-- - [AVTRDB] - [Discord](https://discord.gg/ZxB6w2hGfU) / [Web](https://avtrdb.com) / [VRCX](https://api.avtrdb.com/v1/avatar/search/vrcx) -->
+- [AVTRDB] - [Discord](https://discord.gg/ZxB6w2hGfU) / [Web](https://avtrdb.com) / [VRCX](https://api.avtrdb.com/v1/avatar/search/vrcx)
 - [DOUGHNUT] - [Discord](https://discord.gg/tjfXPzzaxu) / [Web](https://avtr1.nekosunevr.co.uk/search.php) / [VRCX](https://avtr1.nekosunevr.co.uk/vrcx_search.php)
 - [NEKO] - [Discord](https://discord.gg/tjfXPzzaxu) / [Web](https://avtr.nekosunevr.co.uk/search.php) / [VRCX](https://avtr.nekosunevr.co.uk/vrcx_search.php)
 - [VRCDB] - [Discord](https://discord.gg/q427ecnUvj) / [Web](https://vrcdb.com) / [World](https://vrchat.com/home/world/wrld_1146f625-5d42-40f5-bfe7-06a7664e2796) / [VRCX](vrcx.vrcdb.com/avatars/Avatar/VRCX)
