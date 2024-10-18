@@ -27,13 +27,13 @@ Place the file in the VRChat directory or `PATH` and set your launch options
 `vrc-log(.exe) %command%`
 
 ### Supported Avatar Database Providers
-- [avtrDB - Avatar Search] - [Discord](https://discord.gg/ZxB6w2hGfU) / [Web](https://avtrdb.com) / [VRCX](https://api.avtrdb.com/v1/avatar/search/vrcx)
-- [VRCDB - Avatar Search] - [Discord](https://discord.gg/q427ecnUvj) / [Web](https://vrcdb.com) / [World](https://vrchat.com/home/world/wrld_1146f625-5d42-40f5-bfe7-06a7664e2796) / [VRCX](vrcx.vrcdb.com/avatars/Avatar/VRCX)
-- [VRCGA - Guardian Angel] - [Discord](https://discord.gg/tjfXPzzaxu) / [Web](https://avtr.nekosunevr.co.uk/search.php) / [VRCX](https://avtr.nekosunevr.co.uk/vrcx_search.php)
-- [VRCWB - World Balancer] - [Discord](https://discord.gg/Uw7aAShdsp) / [Web](https://avtr1.nekosunevr.co.uk/search.php) / [VRCX](https://avtr1.nekosunevr.co.uk/vrcx_search.php)
+- [avtrDB - Avatar Search] - [Discord](https://discord.gg/ZxB6w2hGfU) / [VRCX](https://api.avtrdb.com/v1/avatar/search/vrcx) / [Web](https://avtrdb.com)
+- [VRCDB - Avatar Search] - [Discord](https://discord.gg/q427ecnUvj) / [VRCX](https://vrcx.vrcdb.com/avatars/Avatar/VRCX) / [Web](https://vrcdb.com) / [World](https://vrchat.com/home/world/wrld_1146f625-5d42-40f5-bfe7-06a7664e2796)
+- [VRCGA - Guardian Angel] - [Discord](https://discord.gg/tjfXPzzaxu) / [VRCX](https://avtr.nekosunevr.co.uk/vrcx_search.php) / [Web](https://avtr.nekosunevr.co.uk/search.php)
+- [VRCWB - World Balancer] - [Discord](https://discord.gg/Uw7aAShdsp) / [VRCX](https://avtr1.nekosunevr.co.uk/vrcx_search.php) / [Web](https://avtr1.nekosunevr.co.uk/search.php)
 
 #### Unsupported Avatar Database Providers
-- ~~VRCDB Ravenwood~~ - Shutdown
+- ~~VRCDB - Ravenwood~~ - Shutdown
 - ~~[Just H Party]~~ - Can't submit avatars
 - ~~[Prismic's Avatar Search]~~ - Can't submit avatars
 
