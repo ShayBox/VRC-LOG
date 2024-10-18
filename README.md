@@ -27,22 +27,22 @@ Place the file in the VRChat directory or `PATH` and set your launch options
 `vrc-log(.exe) %command%`
 
 ### Supported Avatar Database Providers
-- [AVTRDB] - [Discord](https://discord.gg/ZxB6w2hGfU) / [Web](https://avtrdb.com) / [VRCX](https://api.avtrdb.com/v1/avatar/search/vrcx)
-- [DOUGHNUT] - [Discord](https://discord.gg/tjfXPzzaxu) / [Web](https://avtr1.nekosunevr.co.uk/search.php) / [VRCX](https://avtr1.nekosunevr.co.uk/vrcx_search.php)
-- [NEKO] - [Discord](https://discord.gg/tjfXPzzaxu) / [Web](https://avtr.nekosunevr.co.uk/search.php) / [VRCX](https://avtr.nekosunevr.co.uk/vrcx_search.php)
-- [VRCDB] - [Discord](https://discord.gg/q427ecnUvj) / [Web](https://vrcdb.com) / [World](https://vrchat.com/home/world/wrld_1146f625-5d42-40f5-bfe7-06a7664e2796) / [VRCX](vrcx.vrcdb.com/avatars/Avatar/VRCX)
+- [avtrDB - Avatar Search] - [Discord](https://discord.gg/ZxB6w2hGfU) / [Web](https://avtrdb.com) / [VRCX](https://api.avtrdb.com/v1/avatar/search/vrcx)
+- [VRCDB - Avatar Search] - [Discord](https://discord.gg/q427ecnUvj) / [Web](https://vrcdb.com) / [World](https://vrchat.com/home/world/wrld_1146f625-5d42-40f5-bfe7-06a7664e2796) / [VRCX](vrcx.vrcdb.com/avatars/Avatar/VRCX)
+- [VRCGA - Guardian Angel] - [Discord](https://discord.gg/tjfXPzzaxu) / [Web](https://avtr.nekosunevr.co.uk/search.php) / [VRCX](https://avtr.nekosunevr.co.uk/vrcx_search.php)
+- [VRCWB - World Balancer] - [Discord](https://discord.gg/Uw7aAShdsp) / [Web](https://avtr1.nekosunevr.co.uk/search.php) / [VRCX](https://avtr1.nekosunevr.co.uk/vrcx_search.php)
 
 #### Unsupported Avatar Database Providers
-- ~~Ravenwood~~ - Used VRCDB (Shutdown)
+- ~~VRCDB Ravenwood~~ - Shutdown
 - ~~[Just H Party]~~ - Can't submit avatars
 - ~~[Prismic's Avatar Search]~~ - Can't submit avatars
 
 Additional providers are welcome, please open an issue, pull request, or join Discord
 
-[AVTRDB]: https://avtrdb.com
-[DOUGHNUT]: https://avtr1.nekosunevr.co.uk
+[avtrDB - Avatar Search]: https://avtrdb.com
 [Just H Party]: https://avtr.just-h.party
-[NEKO]: https://avtr.nekosunevr.co.uk
 [Prismic's Avatar Search]: https://vrchat.com/home/world/wrld_57514404-7f4e-4aee-a50a-57f55d3084bf
-[VRCDB]: https://sites.smokes-hub.de
+[VRCDB - Avatar Search]: https://sites.smokes-hub.de
+[VRCGA - Guardian Angel]: https://avtr.nekosunevr.co.uk
+[VRCWB - World Balancer]: https://avtr1.nekosunevr.co.uk
 [VRCX]: https://github.com/vrcx-team/VRCX?tab=readme-ov-file#--vrcx

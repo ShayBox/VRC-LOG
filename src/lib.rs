@@ -18,6 +18,7 @@ use crossbeam::channel::{Receiver, Sender};
 use lazy_regex::{lazy_regex, regex_replace_all, Lazy, Regex};
 use notify::{Config, Event, PollWatcher, RecursiveMode, Watcher};
 use parking_lot::RwLock;
+use terminal_link::Link;
 
 use crate::provider::{prelude::*, Providers, Type};
 
@@ -45,15 +46,13 @@ pub fn get_local_time() -> String {
 /// Will return `Err` if couldn't get the GitHub repository
 pub fn check_for_updates() -> reqwest::Result<bool> {
     let response = reqwest::blocking::get(CARGO_PKG_HOMEPAGE)?;
-    let Some(segments) = response.url().path_segments() else {
-        return Ok(false);
+    if let Some(segments) = response.url().path_segments() {
+        if let Some(remote_version) = segments.last() {
+            return Ok(remote_version > CARGO_PKG_VERSION);
+        };
     };
 
-    let Some(remote_version) = segments.last() else {
-        return Ok(false);
-    };
-
-    Ok(remote_version > CARGO_PKG_VERSION)
+    Ok(false)
 }
 
 /// # Errors
@@ -116,10 +115,10 @@ pub fn process_avatars((_tx, rx, _): WatchResponse) -> anyhow::Result<()> {
         (Type::CACHE, box_db!(Cache::new()?)),
         #[cfg(feature = "avtrdb")]
         (Type::AVTRDB, box_db!(AvtrDB::default())),
-        #[cfg(feature = "doughnut")]
-        (Type::DOUGHNUT, box_db!(Doughnut::default())),
-        #[cfg(feature = "neko")]
-        (Type::NEKO, box_db!(Neko::default())),
+        #[cfg(feature = "vrcwb")]
+        (Type::VRCWB, box_db!(VRCWB::default())),
+        #[cfg(feature = "vrcga")]
+        (Type::VRCGA, box_db!(VRCGA::default())),
         #[cfg(feature = "vrcdb")]
         (Type::VRCDB, box_db!(VRCDB::default())),
     ]);
@@ -224,6 +223,7 @@ pub fn print_colorized(avatar_id: &str) {
     let color = COLORS[index];
     *INDEX.write() = (index + 1) % COLORS.len();
 
-    let text = format!("vrcx://avatar/{avatar_id}").color(color);
-    info!("{text}");
+    let text = format!("vrcx://avatar/{avatar_id}");
+    let link = Link::new(&text, &text).to_string().color(color);
+    info!("{link}");
 }

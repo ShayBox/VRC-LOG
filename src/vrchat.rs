@@ -23,6 +23,7 @@ pub struct VRChat {
     /// This is actually the path to the cache parent directory
     /// `VRChat` doesn't allow you to change the cache directory name
     /// The `Cache-WindowsPlayer` path is appended during deserialization below
+    /// Because this is how `VRChat` does it, it must not be in the config file
     #[serde(deserialize_with = "deserialize")]
     pub cache_directory: PathBuf,
 }

@@ -2,9 +2,9 @@
 pub use super::avtrdb::AvtrDB;
 #[cfg(feature = "cache")]
 pub use super::cache::Cache;
-#[cfg(feature = "doughnut")]
-pub use super::doughnut::Doughnut;
-#[cfg(feature = "neko")]
-pub use super::neko::Neko;
+#[cfg(feature = "vrcwb")]
+pub use super::vrcwb::VRCWB;
+#[cfg(feature = "vrcga")]
+pub use super::vrcga::VRCGA;
 #[cfg(feature = "vrcdb")]
 pub use super::vrcdb::VRCDB;

@@ -37,44 +37,38 @@ impl Discord {
     }
 }
 
-#[once(sync_writes = true)]
-pub fn get_dev_id() -> String {
-    warn!("Error: Discord RPC Connection Failed\n");
-    warn!("This may be due to one of the following reasons:");
-    warn!("1. Discord is not running on your system.");
-    warn!("2. VRC-LOG was restarted too quickly.\n");
-    warn!("The User ID will default to the developer: ShayBox");
-
-    std::env::var("DISCORD").unwrap_or_else(|_| DEVELOPER_ID.to_owned())
-}
-
 #[once(option = true, sync_writes = true)]
 pub fn get_user_id() -> Option<String> {
-    let discord = Discord::start();
+    if let Ok(user_id) = std::env::var("DISCORD") {
+        /* TODO: Validate User ID (Snowflake) - Regex? */
+        return Some(user_id);
+    }
 
-    // block_until_event will never time out
+    let discord = Discord::start();
     std::thread::sleep(Duration::from_secs(5));
     discord.client.shutdown().ok()?;
-
-    let user_id = match discord.user.lock().clone() {
-        None => get_dev_id(),
-        Some(user) => {
-            let userid = user.id.unwrap_or_else(get_dev_id);
-            if userid == "1045800378228281345" {
-                warn!("Vesktop & arRPC doesn't support fetching user info");
-                warn!("You can supply the 'DISCORD' env variable manually");
-                warn!("The User ID will default to the developer: ShayBox");
-
-                std::env::var("DISCORD").unwrap_or_else(|_| DEVELOPER_ID.to_owned())
-            } else {
-                if let Some(username) = user.username {
+    
+    if let Some(user) = discord.user.lock().as_ref() {
+        if let Some(user_id) = &user.id {
+            if user_id != "1045800378228281345" {
+                if let Some(username) = &user.username {
                     info!("[Discord] Authenticated as {username}");
                 }
 
-                userid
+                return Some(user_id.clone());
             }
+            
+            warn!("Vesktop & arRPC doesn't support fetching user info");
+            warn!("You can supply the 'DISCORD' env variable manually");
+            warn!("The User ID will default to the developer: ShayBox");
         }
-    };
-
-    Some(user_id)
+    } else {
+        warn!("Error: Discord RPC Connection Failed\n");
+        warn!("This may be due to one of the following reasons:");
+        warn!("1. Discord is not running on your system.");
+        warn!("2. VRC-LOG was restarted too quickly.\n");
+        warn!("The User ID will default to the developer: ShayBox");
+    }
+    
+    Some(String::from(DEVELOPER_ID))
 }

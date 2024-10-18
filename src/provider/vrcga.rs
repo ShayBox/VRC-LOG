@@ -8,14 +8,14 @@ use crate::{
     USER_AGENT,
 };
 
-const URL: &str = "https://avtr1.nekosunevr.co.uk/v1/vrchat/avatars/store/putavatarExternal";
+const URL: &str = "https://avtr.nekosunevr.co.uk/v1/vrchat/avatars/store/putavatarExternal";
 
-pub struct Doughnut {
+pub struct VRCGA {
     client: Client,
     userid: String,
 }
 
-impl Default for Doughnut {
+impl Default for VRCGA {
     fn default() -> Self {
         Self {
             client: Client::default(),
@@ -24,7 +24,7 @@ impl Default for Doughnut {
     }
 }
 
-impl Provider for Doughnut {
+impl Provider for VRCGA {
     fn check_avatar_id(&self, _avatar_id: &str) -> Result<bool> {
         bail!("Cache Only")
     }
@@ -42,12 +42,12 @@ impl Provider for Doughnut {
 
         let status = response.status();
         let text = response.text()?;
-        debug!("[{}] {status} | {text}", Type::DOUGHNUT);
+        debug!("[{}] {status} | {text}", Type::VRCGA);
 
         let unique = match status {
             StatusCode::OK => false,
             StatusCode::NOT_FOUND => true,
-            _ => bail!("[{}] {status} | {text}", Type::DOUGHNUT),
+            _ => bail!("[{}] {status} | {text}", Type::VRCGA),
         };
 
         Ok(unique)

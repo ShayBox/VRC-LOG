@@ -8,14 +8,14 @@ use crate::{
     USER_AGENT,
 };
 
-const URL: &str = "https://avtr.nekosunevr.co.uk/v1/vrchat/avatars/store/putavatarExternal";
+const URL: &str = "https://avtr1.nekosunevr.co.uk/v1/vrchat/avatars/store/putavatarExternal";
 
-pub struct Neko {
+pub struct VRCWB {
     client: Client,
     userid: String,
 }
 
-impl Default for Neko {
+impl Default for VRCWB {
     fn default() -> Self {
         Self {
             client: Client::default(),
@@ -24,7 +24,7 @@ impl Default for Neko {
     }
 }
 
-impl Provider for Neko {
+impl Provider for VRCWB {
     fn check_avatar_id(&self, _avatar_id: &str) -> Result<bool> {
         bail!("Cache Only")
     }
@@ -42,12 +42,12 @@ impl Provider for Neko {
 
         let status = response.status();
         let text = response.text()?;
-        debug!("[{}] {status} | {text}", Type::NEKO);
+        debug!("[{}] {status} | {text}", Type::VRCWB);
 
         let unique = match status {
             StatusCode::OK => false,
             StatusCode::NOT_FOUND => true,
-            _ => bail!("[{}] {status} | {text}", Type::NEKO),
+            _ => bail!("[{}] {status} | {text}", Type::VRCWB),
         };
 
         Ok(unique)

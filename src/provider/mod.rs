@@ -6,10 +6,10 @@ use strum::Display;
 pub mod avtrdb;
 #[cfg(feature = "cache")]
 pub mod cache;
-#[cfg(feature = "doughnut")]
-pub mod doughnut;
-#[cfg(feature = "neko")]
-pub mod neko;
+#[cfg(feature = "vrcwb")]
+pub mod vrcwb;
+#[cfg(feature = "vrcga")]
+pub mod vrcga;
 #[cfg(feature = "vrcdb")]
 pub mod vrcdb;
 
@@ -17,16 +17,20 @@ pub mod prelude;
 
 #[derive(Display, Eq, Hash, PartialEq)]
 pub enum Type {
-    #[cfg(feature = "avtrdb")]
-    AVTRDB,
     #[cfg(feature = "cache")]
     CACHE,
-    #[cfg(feature = "doughnut")]
-    DOUGHNUT,
-    #[cfg(feature = "neko")]
-    NEKO,
+    #[cfg(feature = "avtrdb")]
+    #[strum(to_string = "avtrDB - Avatar Search")]
+    AVTRDB,
     #[cfg(feature = "vrcdb")]
+    #[strum(to_string = "VRCDB - Avatar Search")]
     VRCDB,
+    #[cfg(feature = "vrcga")]
+    #[strum(to_string = "VRCGA - Guardian Angel")]
+    VRCGA,
+    #[cfg(feature = "vrcwb")]
+    #[strum(to_string = "VRCWB - World Balancer")]
+    VRCWB,
 }
 
 pub trait Provider {
