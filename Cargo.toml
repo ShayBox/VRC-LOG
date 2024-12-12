@@ -1,6 +1,6 @@
 [package]
 name = "vrc-log"
-version = "0.9.1"
+version = "0.9.2"
 authors = ["Shayne Hartford <shaybox@shaybox.com>"]
 edition = "2021"
 description = "VRChat Local Cache Avatar ID Logger"
@@ -15,7 +15,7 @@ categories = ["config", "database", "filesystem", "games", "parsing"]
 
 [dependencies]
 anyhow = "1"
-cached = { version = "0.53", optional = true }
+cached = { version = "0.54", optional = true }
 chrono = "0.4"
 colored = "2"
 crossbeam = "0.8"
@@ -23,7 +23,7 @@ crossterm = { version = "0.28", optional = true }
 discord-presence = { version = "1", optional = true }
 indexmap = "2"
 lazy-regex = "3"
-notify = "6"
+notify = "7"
 parking_lot = "0.12"
 reqwest = { version = "0.12", features = ["blocking", "json"], optional = true }
 serde = { version = "1", features = ["derive"] }
@@ -36,13 +36,13 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "time"] }
 
 [features]
-default = ["cache", "avtrdb", "vrcdb", "vrcga", "vrcwb", "title"]
+default = ["cache", "avtrdb", "vrcdb", "vrcds", "vrcwb", "title"]
 
 # VRChat Avatar Database Providers
 cache = ["dep:sqlite"]
 avtrdb = ["dep:reqwest", "discord"]
 vrcdb = ["dep:reqwest", "discord"]
-vrcga = ["dep:reqwest", "discord"]
+vrcds = ["dep:reqwest", "discord"]
 vrcwb = ["dep:reqwest", "discord"]
 
 discord = ["dep:discord-presence", "dep:cached"]

@@ -6,12 +6,12 @@ use strum::Display;
 pub mod avtrdb;
 #[cfg(feature = "cache")]
 pub mod cache;
-#[cfg(feature = "vrcwb")]
-pub mod vrcwb;
-#[cfg(feature = "vrcga")]
-pub mod vrcga;
 #[cfg(feature = "vrcdb")]
 pub mod vrcdb;
+#[cfg(feature = "vrcds")]
+pub mod vrcds;
+#[cfg(feature = "vrcwb")]
+pub mod vrcwb;
 
 pub mod prelude;
 
@@ -25,9 +25,9 @@ pub enum Type {
     #[cfg(feature = "vrcdb")]
     #[strum(to_string = "VRCDB - Avatar Search")]
     VRCDB,
-    #[cfg(feature = "vrcga")]
-    #[strum(to_string = "VRCGA - Guardian Angel")]
-    VRCGA,
+    #[cfg(feature = "vrcds")]
+    #[strum(to_string = "VRCLogger - Project Dark Star")]
+    VRCDS,
     #[cfg(feature = "vrcwb")]
     #[strum(to_string = "VRCWB - World Balancer")]
     VRCWB,

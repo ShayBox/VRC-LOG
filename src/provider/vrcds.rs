@@ -1,21 +1,21 @@
 use std::collections::HashMap;
 
-use anyhow::{bail, Result};
-use reqwest::blocking::Client;
-use reqwest::StatusCode;
 use crate::{
     provider::{Provider, Type},
     USER_AGENT,
 };
+use anyhow::{bail, Result};
+use reqwest::blocking::Client;
+use reqwest::StatusCode;
 
 const URL: &str = "https://avtr.nekosunevr.co.uk/v1/vrchat/avatars/store/putavatarExternal";
 
-pub struct VRCGA {
+pub struct VRCDS {
     client: Client,
     userid: String,
 }
 
-impl Default for VRCGA {
+impl Default for VRCDS {
     fn default() -> Self {
         Self {
             client: Client::default(),
@@ -24,7 +24,7 @@ impl Default for VRCGA {
     }
 }
 
-impl Provider for VRCGA {
+impl Provider for VRCDS {
     fn check_avatar_id(&self, _avatar_id: &str) -> Result<bool> {
         bail!("Cache Only")
     }
@@ -42,12 +42,12 @@ impl Provider for VRCGA {
 
         let status = response.status();
         let text = response.text()?;
-        debug!("[{}] {status} | {text}", Type::VRCGA);
+        debug!("[{}] {status} | {text}", Type::VRCDS);
 
         let unique = match status {
             StatusCode::OK => false,
             StatusCode::NOT_FOUND => true,
-            _ => bail!("[{}] {status} | {text}", Type::VRCGA),
+            _ => bail!("[{}] {status} | {text}", Type::VRCDS),
         };
 
         Ok(unique)
