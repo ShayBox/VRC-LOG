@@ -1,14 +1,14 @@
 use std::collections::HashMap;
 
-use anyhow::{bail, Result};
-use reqwest::blocking::Client;
-use reqwest::StatusCode;
 use crate::{
     provider::{Provider, Type},
     USER_AGENT,
 };
+use anyhow::{bail, Result};
+use reqwest::blocking::Client;
+use reqwest::StatusCode;
 
-const URL: &str = "https://avtr1.nekosunevr.co.uk/v1/vrchat/avatars/store/putavatarExternal";
+const URL: &str = "http://worldbalancer.duia.us:5102/v1/vrchat/avatars/store/putavatarExternal";
 
 pub struct VRCWB {
     client: Client,

@@ -117,8 +117,8 @@ pub fn process_avatars((_tx, rx, _): WatchResponse) -> anyhow::Result<()> {
         (Type::AVTRDB, box_db!(AvtrDB::default())),
         #[cfg(feature = "vrcwb")]
         (Type::VRCWB, box_db!(VRCWB::default())),
-        #[cfg(feature = "vrcga")]
-        (Type::VRCGA, box_db!(VRCGA::default())),
+        #[cfg(feature = "vrcds")]
+        (Type::VRCDS, box_db!(VRCDS::default())),
         #[cfg(feature = "vrcdb")]
         (Type::VRCDB, box_db!(VRCDB::default())),
     ]);
