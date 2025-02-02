@@ -8,7 +8,6 @@ use std::{
     path::{Path, PathBuf},
     process::{Command, Stdio},
     sync::LazyLock,
-    time::Duration,
 };
 
 use anyhow::{bail, Context};
@@ -43,7 +42,7 @@ pub fn get_local_time() -> String {
 }
 
 /// # Errors
-/// Will return `Err` if couldn't get the GitHub repository
+/// Will return `Err` if it couldn't get the GitHub repository
 pub fn check_for_updates() -> reqwest::Result<bool> {
     let response = reqwest::blocking::get(CARGO_PKG_HOMEPAGE)?;
     if let Some(segments) = response.url().path_segments() {
@@ -138,7 +137,6 @@ pub fn process_avatars((_tx, rx, _): WatchResponse) -> anyhow::Result<()> {
             let mut send_to_cache = true;
 
             print_colorized(&avatar_id);
-            std::thread::sleep(Duration::from_secs(3));
 
             for (provider_type, provider) in &providers {
                 match provider.send_avatar_id(&avatar_id) {
@@ -200,6 +198,7 @@ pub fn parse_avatar_ids(path: &PathBuf) -> Vec<String> {
     avatar_ids
 }
 
+/// # Print with colorized rainbow rows for separation
 pub fn print_colorized(avatar_id: &str) {
     static INDEX: LazyLock<RwLock<usize>> = LazyLock::new(|| RwLock::new(0));
     static COLORS: LazyLock<[Color; 12]> = LazyLock::new(|| {
