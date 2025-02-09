@@ -1,6 +1,6 @@
 [package]
 name = "vrc-log"
-version = "0.9.3"
+version = "0.9.4"
 authors = ["Shayne Hartford <shaybox@shaybox.com>"]
 edition = "2021"
 description = "VRChat Local Cache Avatar ID Logger"
@@ -36,8 +36,7 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "time"] }
 
 [features]
-#default = ["cache", "avtrdb", "vrcdb", "vrcds", "vrcwb", "title"]
-default = ["cache", "avtrdb", "vrcdb", "vrcwb", "title"] # Temp: VRCDB
+default = ["cache", "avtrdb", "vrcdb", "vrcds", "vrcwb", "title"]
 
 # VRChat Avatar Database Providers
 cache = ["dep:sqlite"]
