@@ -8,7 +8,7 @@ use crate::{
     USER_AGENT,
 };
 
-const BASE_URL: &str = "https://api.avtrdb.com/v1/";
+const BASE_URL: &str = "https://api.avtrdb.com/v2/";
 
 pub struct AvtrDB {
     client:      Client,
