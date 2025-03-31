@@ -9,14 +9,23 @@ use anyhow::Context;
 use serde::{Deserialize, Deserializer, Serialize};
 
 #[cfg(target_os = "windows")]
-const VRCHAT: &str = "%AppData%\\..\\LocalLow\\VRChat\\VRChat";
+const AMP_PATH: &str = "%Temp%\\VRChat\\VRChat\\amplitude.cache";
 
 #[cfg(target_os = "linux")]
-const VRCHAT: &str = "$HOME/.local/share/Steam/steamapps/compatdata/438100/pfx/drive_c/users/steamuser/AppData/LocalLow/VRChat/VRChat";
+const AMP_PATH: &str = "$HOME/.local/share/Steam/steamapps/compatdata/438100/pfx/drive_c/users/steamuser/Temp/VRChat/VRChat/amplitude.cache";
+
+#[cfg(target_os = "windows")]
+const LOW_PATH: &str = "%AppData%\\..\\LocalLow\\VRChat\\VRChat";
+
+#[cfg(target_os = "linux")]
+const LOW_PATH: &str = "$HOME/.local/share/Steam/steamapps/compatdata/438100/pfx/drive_c/users/steamuser/AppData/LocalLow/VRChat/VRChat";
+
+pub static VRCHAT_AMP_PATH: LazyLock<PathBuf> =
+    LazyLock::new(|| crate::parse_path_env(AMP_PATH).expect("Failed to parse amplitude path"));
 
 /// This is a static path and cannot be changed (without symlinks)
-pub static VRCHAT_PATH: LazyLock<PathBuf> =
-    LazyLock::new(|| crate::parse_path_env(VRCHAT).expect("Failed to parse default path"));
+pub static VRCHAT_LOW_PATH: LazyLock<PathBuf> =
+    LazyLock::new(|| crate::parse_path_env(LOW_PATH).expect("Failed to parse local low path"));
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct VRChat {
@@ -45,7 +54,7 @@ pub fn deserialize<'de, D: Deserializer<'de>>(deserializer: D) -> Result<PathBuf
 impl VRChat {
     #[must_use]
     pub fn get_path() -> PathBuf {
-        VRCHAT_PATH.join("config.json")
+        VRCHAT_LOW_PATH.join("config.json")
     }
 
     /// Try to load the `VRChat` `config.json` file for the `cache_directory` field
@@ -73,7 +82,7 @@ impl VRChat {
 impl Default for VRChat {
     fn default() -> Self {
         Self {
-            cache_directory: VRCHAT_PATH.join("Cache-WindowsPlayer"),
+            cache_directory: VRCHAT_LOW_PATH.join("Cache-WindowsPlayer"),
         }
     }
 }
