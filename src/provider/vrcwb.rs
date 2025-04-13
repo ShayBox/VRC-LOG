@@ -8,7 +8,7 @@ use anyhow::{bail, Result};
 use reqwest::blocking::Client;
 use reqwest::StatusCode;
 
-const URL: &str = "https://avatarwb.worldbalancer.duia.us/v1/vrchat/avatars/store/putavatarExternal";
+const URL: &str = "https://avatar.worldbalancer.com/v1/vrchat/avatars/store/putavatarExternal";
 
 pub struct VRCWB {
     client: Client,
