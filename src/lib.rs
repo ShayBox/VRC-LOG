@@ -8,6 +8,7 @@ use std::{
     path::{Path, PathBuf},
     process::{Command, Stdio},
     sync::LazyLock,
+    time::Duration,
 };
 
 use anyhow::{bail, Context};
@@ -68,7 +69,7 @@ pub fn watch<P: AsRef<Path>>(path: P) -> notify::Result<WatchResponse> {
                 }
             }
         },
-        Config::default(),
+        Config::default().with_poll_interval(Duration::from_secs(1)),
         move |scan_event: notify::Result<PathBuf>| {
             if let Ok(path) = scan_event {
                 let _ = tx_b.send(path);

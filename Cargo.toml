@@ -1,9 +1,9 @@
 [package]
 name = "vrc-log"
-version = "0.9.4"
+version = "0.10.0"
 authors = ["Shayne Hartford <shaybox@shaybox.com>"]
 edition = "2021"
-description = "VRChat Local Cache Avatar ID Logger"
+description = "VRChat Local Avatar ID Logger"
 readme = "README.md"
 homepage = "https://git.shaybox.com/vrc-log/releases/latest"
 repository = "https://github.com/ShayBox/VRC-LOG"
@@ -15,7 +15,7 @@ categories = ["config", "database", "filesystem", "games", "parsing"]
 
 [dependencies]
 anyhow = "1"
-cached = { version = "0.54", optional = true }
+cached = { version = "0.55", optional = true }
 chrono = "0.4"
 colored = "3"
 crossbeam = "0.8"
@@ -28,8 +28,8 @@ parking_lot = "0.12"
 reqwest = { version = "0.12", features = ["blocking", "json"], optional = true }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-sqlite = { version = "0.36", features = ["bundled"], optional = true }
-strum = { version = "0.26", features = ["derive"] }
+sqlite = { version = "0.37", features = ["bundled"], optional = true }
+strum = { version = "0.27", features = ["derive"] }
 terminal-link = "0.1"
 time = { version = "0.3", features = ["macros"] }
 tracing = "0.1"

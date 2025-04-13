@@ -9,15 +9,22 @@
 
 # VRC-LOG
 
-VRChat Local Cache Avatar ID Logger
+VRChat Local Avatar ID Logger
 
 ## Important Notice
 
 This project does **NOT** rip or steal avatars, and it is **NOT** against the VRChat Terms of Service.  
-This project just scans your local cache for avatar ids and sends them to avatar search worlds and websites.  
+This project just scans your local Amplitude analytics file for avatar ids and sends them to avatar search worlds and
+websites.  
 If you don't want your avatar(s) to be searchable, you can request them to be blacklisted by the below providers.
 
 I **DO NOT** work with search providers that don't allow blacklisting, such as YAAS (part of the SAARs ripper project)
+
+## Cache Encryption
+
+VRChat recently added local avatar cache encryption, which broke the logger, and rippers :)
+I've updated the logger to use the Amplitude Analytics file, which is only written to when loading worlds.  
+You should take a look at this file for the short time it contains data before uploading, there's **A LOT** of data...
 
 ### VRCX Auto-Launch
 

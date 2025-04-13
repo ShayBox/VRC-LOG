@@ -3,7 +3,7 @@ use sqlite::{Connection, State};
 
 use crate::{
     provider::{Provider, Type},
-    vrchat::VRCHAT_PATH,
+    vrchat::VRCHAT_LOW_PATH,
 };
 
 pub struct Cache {
@@ -14,7 +14,7 @@ impl Cache {
     /// # Errors
     /// Will return `Err` if `sqlite::open` errors
     pub fn new() -> Result<Self> {
-        let path = VRCHAT_PATH.join("avatars.sqlite");
+        let path = VRCHAT_LOW_PATH.join("avatars.sqlite");
         let connection = sqlite::open(path)?;
         let query = "CREATE TABLE avatars (
             id TEXT PRIMARY KEY,
