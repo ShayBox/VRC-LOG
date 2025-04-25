@@ -22,7 +22,7 @@ I **DO NOT** work with search providers that don't allow blacklisting, such as Y
 
 ## Cache Encryption
 
-VRChat recently added local avatar cache encryption, which broke the logger, and rippers :)
+VRChat recently added local avatar cache encryption, which broke the logger, and rippers :)  
 I've updated the logger to use the Amplitude Analytics file, which is only written to when loading worlds.  
 You should take a look at this file for the short time it contains data before uploading, there's **A LOT** of data...
 
