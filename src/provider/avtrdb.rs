@@ -113,7 +113,7 @@ impl Provider for AvtrDB {
         let unique = match status {
             StatusCode::OK => data.valid_avatar_ids == 1,
             StatusCode::TOO_MANY_REQUESTS => {
-                warn!("[{}] 429 Rate Limit, trying again in 10 seconds", Type::VRCDB);
+                warn!("[{}] 429 Rate Limit, trying again in 10 seconds", Type::AVTRDB);
                 std::thread::sleep(Duration::from_secs(10));
                 self.send_avatar_id(avatar_id)?
             }
