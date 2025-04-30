@@ -61,22 +61,20 @@ pub fn watch<P: AsRef<Path>>(tx: Sender<PathBuf>, path: P) -> notify::Result<Pol
         move |watch_event: notify::Result<Event>| {
             if let Ok(event) = watch_event {
                 for path in event.paths {
-                    if path.ends_with("avatars.sqlite") {
-                        continue;
+                    if !path.ends_with(".log") {
+                        let _ = tx.send(path);
                     }
-
-                    let _ = tx.send(path);
                 }
             }
         },
-        Config::default().with_poll_interval(Duration::from_secs(1)),
+        Config::default()
+            .with_compare_contents(true)
+            .with_poll_interval(Duration::from_secs(1)),
         move |scan_event: notify::Result<PathBuf>| {
             if let Ok(path) = scan_event {
-                if path.ends_with("avatars.sqlite") {
-                    return;
+                if !path.ends_with(".log") {
+                    let _ = tx_clone.send(path);
                 }
-
-                let _ = tx_clone.send(path);
             }
         },
     )?;
