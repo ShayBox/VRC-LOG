@@ -28,7 +28,7 @@ impl Discord {
             .on_ready(move |ctx| {
                 if let EventData::Ready(event) = ctx.event {
                     *user.lock() = event.user;
-                };
+                }
             })
             .persist();
 
@@ -47,7 +47,7 @@ pub fn get_user_id() -> Option<String> {
     let discord = Discord::start();
     std::thread::sleep(Duration::from_secs(5));
     discord.client.shutdown().ok()?;
-    
+
     if let Some(user) = discord.user.lock().as_ref() {
         if let Some(user_id) = &user.id {
             if user_id != "1045800378228281345" {
@@ -57,7 +57,7 @@ pub fn get_user_id() -> Option<String> {
 
                 return Some(user_id.clone());
             }
-            
+
             warn!("Vesktop & arRPC doesn't support fetching user info");
             warn!("You can supply the 'DISCORD' env variable manually");
             warn!("The User ID will default to the developer: ShayBox");
@@ -69,6 +69,6 @@ pub fn get_user_id() -> Option<String> {
         warn!("2. VRC-LOG was restarted too quickly.\n");
         warn!("The User ID will default to the developer: ShayBox");
     }
-    
+
     Some(String::from(DEVELOPER_ID))
 }

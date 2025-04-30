@@ -1,12 +1,12 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, time::Duration};
+
+use anyhow::{bail, Result};
+use reqwest::{blocking::Client, StatusCode};
 
 use crate::{
     provider::{Provider, Type},
     USER_AGENT,
 };
-use anyhow::{bail, Result};
-use reqwest::blocking::Client;
-use reqwest::StatusCode;
 
 const URL: &str = "https://avtr.nekosunevr.co.uk/v1/vrchat/avatars/store/putavatarExternal";
 
@@ -38,6 +38,7 @@ impl Provider for VRCDS {
                 ("id", avatar_id),
                 ("userid", &self.userid),
             ]))
+            .timeout(Duration::from_secs(1)) // TODO: Remove when API is more stable.
             .send()?;
 
         let status = response.status();
@@ -47,7 +48,10 @@ impl Provider for VRCDS {
         let unique = match status {
             StatusCode::OK => false,
             StatusCode::NOT_FOUND => true,
-            _ => bail!("[{}] {status} | {text}", Type::VRCDS),
+            _ => {
+                error!("[{}] {status} | {text}", Type::VRCDS);
+                false // TODO: Ignore for cache purposes, it goes offline too often.
+            }
         };
 
         Ok(unique)

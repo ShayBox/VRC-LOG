@@ -35,51 +35,47 @@ pub const USER_AGENT: &str = concat!(
     " shaybox@shaybox.com"
 );
 
-pub type WatchResponse = (Sender<PathBuf>, Receiver<PathBuf>, PollWatcher);
-
 #[must_use]
 pub fn get_local_time() -> String {
     Local::now().format("%Y-%m-%d %H:%M:%S").to_string()
 }
 
 /// # Errors
-/// Will return `Err` if it couldn't get the GitHub repository
+/// Will return `Err` if it couldn't get the GitHub repository.
 pub fn check_for_updates() -> reqwest::Result<bool> {
     let response = reqwest::blocking::get(CARGO_PKG_HOMEPAGE)?;
-    if let Some(segments) = response.url().path_segments() {
-        if let Some(remote_version) = segments.last() {
+    if let Some(mut segments) = response.url().path_segments() {
+        if let Some(remote_version) = segments.next_back() {
             return Ok(remote_version > CARGO_PKG_VERSION);
-        };
-    };
+        }
+    }
 
     Ok(false)
 }
 
 /// # Errors
 /// Will return `Err` if `PollWatcher::watch` errors
-pub fn watch<P: AsRef<Path>>(path: P) -> notify::Result<WatchResponse> {
-    let (tx_a, rx_a) = crossbeam::channel::unbounded();
-    let (tx_b, tx_c) = (tx_a.clone(), tx_a.clone());
-
+pub fn watch<P: AsRef<Path>>(tx: Sender<PathBuf>, path: P) -> notify::Result<PollWatcher> {
+    let tx_clone = tx.clone();
     let mut watcher = PollWatcher::with_initial_scan(
         move |watch_event: notify::Result<Event>| {
             if let Ok(event) = watch_event {
                 for path in event.paths {
-                    let _ = tx_c.send(path);
+                    let _ = tx.send(path);
                 }
             }
         },
         Config::default().with_poll_interval(Duration::from_secs(1)),
         move |scan_event: notify::Result<PathBuf>| {
             if let Ok(path) = scan_event {
-                let _ = tx_b.send(path);
+                let _ = tx_clone.send(path);
             }
         },
     )?;
 
-    watcher.watch(path.as_ref(), RecursiveMode::Recursive)?;
+    watcher.watch(path.as_ref(), RecursiveMode::NonRecursive)?;
 
-    Ok((tx_a, rx_a, watcher))
+    Ok(watcher)
 }
 
 /// Steam Game Launch Options: `.../vrc-log(.exe) %command%`
@@ -108,7 +104,7 @@ pub fn launch_game(args: Args) -> anyhow::Result<()> {
 
 /// # Errors
 /// Will return `Err` if `Sqlite::new` or `Provider::send_avatar_id` errors
-pub fn process_avatars((_tx, rx, _): WatchResponse) -> anyhow::Result<()> {
+pub fn process_avatars(rx: &Receiver<PathBuf>) -> anyhow::Result<()> {
     #[cfg_attr(not(feature = "cache"), allow(unused_mut))]
     let mut providers = Providers::from([
         #[cfg(feature = "cache")]
@@ -129,10 +125,10 @@ pub fn process_avatars((_tx, rx, _): WatchResponse) -> anyhow::Result<()> {
     while let Ok(path) = rx.recv() {
         let avatar_ids = parse_avatar_ids(&path);
         for avatar_id in avatar_ids {
-            #[cfg(feature = "cache")] // Avatar is already in cache
+            #[cfg(feature = "cache")] // Avatar already in cache
             if !cache.check_avatar_id(&avatar_id).unwrap_or(true) {
                 continue;
-            };
+            }
 
             #[cfg(feature = "cache")] // Don't send to cache if sending failed
             let mut send_to_cache = true;

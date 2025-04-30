@@ -13,22 +13,24 @@ VRChat Local Avatar ID Logger
 
 ## Important Notice
 
-This project does **NOT** rip or steal avatars, and it is **NOT** against the VRChat Terms of Service.  
-This project just scans your local Amplitude analytics file for avatar ids and sends them to avatar search worlds and
-websites.  
-If you don't want your avatar(s) to be searchable, you can request them to be blacklisted by the below providers.
+This project does **NOT** rip or steal avatars, and does **NOT** break the VRChat Terms of Service.  
+It just scans your local logs and analytics files for avatar IDs and sends them to avatar search providers.  
+If you don't want your avatars searchable you can request the providers below to blacklist them.
 
 I **DO NOT** work with search providers that don't allow blacklisting, such as YAAS (part of the SAARs ripper project)
 
 ## Cache Encryption
 
 VRChat recently added local avatar cache encryption, which broke the logger, and rippers :)  
-I've updated the logger to use the Amplitude Analytics file, which is only written to when loading worlds.  
-You should take a look at this file for the short time it contains data before uploading, there's **A LOT** of data...
+I've updated the logger to use the Amplitude Analytics file, which only contains data when switching worlds.  
+You should take a look at this file for the short time it contains data before uploading, it contains **A LOT
+** of data...
+
+**You can also add `--enable-sdk-log-levels` to your launch options to get more avatars more quickly.**
 
 ### VRCX Auto-Launch
 
-This program prints [VRCX] avatar links when a new (to you) avatar is found  
+This program prints [VRCX] avatar links when a new (to you) avatars get discovered.  
 You can place a **shortcut** to this program within the [VRCX] Auto-Launch Folder (Settings > Advanced)
 
 ### Steam Launch Options (Headless)
@@ -49,7 +51,7 @@ Place the file in the VRChat directory or `PATH` and set your launch options
 - ~~[Just H Party]~~ - Can't submit avatars
 - ~~[Prismic's Avatar Search]~~ - Can't submit avatars
 
-Additional providers are welcome, please open an issue, pull request, or join Discord
+Additional contributions welcome, please open an issue, pull request, or join Discord.
 
 [avtrDB - Avatar Search]: https://avtrdb.com
 
