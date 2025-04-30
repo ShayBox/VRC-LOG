@@ -1,6 +1,6 @@
 [package]
 name = "vrc-log"
-version = "0.11.2"
+version = "0.11.3"
 authors = ["Shayne Hartford <shaybox@shaybox.com>"]
 edition = "2021"
 description = "VRChat Local Avatar ID Logger"
