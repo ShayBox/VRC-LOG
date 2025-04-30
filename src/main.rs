@@ -40,8 +40,8 @@ fn main() -> anyhow::Result<()> {
     let args = std::env::args();
     let (tx, rx) = crossbeam::channel::unbounded();
     let _ = vrc_log::watch(tx.clone(), VRCHAT_AMP_PATH.as_path())?;
-    let _ = vrc_log::watch(tx, VRCHAT_LOW_PATH.as_path())?;
+    let _ = vrc_log::watch(tx.clone(), VRCHAT_LOW_PATH.as_path())?;
 
     vrc_log::launch_game(args)?;
-    vrc_log::process_avatars(&rx)
+    vrc_log::process_avatars((tx, rx))
 }

@@ -30,7 +30,7 @@ impl Provider for VrcDS {
     }
 
     fn send_avatar_id(&self, avatar_id: &str) -> Result<bool> {
-        let Ok(response) = self
+        let response = match self
             .client
             .post(URL)
             .header("User-Agent", USER_AGENT)
@@ -40,8 +40,13 @@ impl Provider for VrcDS {
             ]))
             .timeout(Duration::from_secs(1)) // TODO: Remove when API is more stable.
             .send()
-        else {
-            return Ok(false); // TODO: Ignore for cache purposes, it goes offline too often.
+        {
+            Ok(response) => response,
+            Err(error) => {
+                // Ignore for cache purposes, it goes offline too often.
+                warn!("[{VRCDS}] {error}");
+                return Ok(false);
+            }
         };
 
         let status = response.status();
