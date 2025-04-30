@@ -3,8 +3,9 @@ use std::{time::Duration, vec};
 use anyhow::{bail, Result};
 use reqwest::{blocking::Client, StatusCode, Url};
 use serde::{Deserialize, Serialize};
+
 use crate::{
-    provider::{Provider, Type},
+    provider::{Provider, Type::AVTRDB},
     USER_AGENT,
 };
 
@@ -71,13 +72,10 @@ impl Provider for AvtrDB {
         let response = self.client.get(url).send()?;
         let status = response.status();
         let text = response.text()?;
-        debug!("[{}] {status} | {text}", Type::AVTRDB);
+        debug!("[{AVTRDB}] {status} | {text}");
 
         if status != StatusCode::OK {
-            bail!(
-                "[{}] Failed to check avatar: {status} | {text}",
-                Type::AVTRDB
-            );
+            bail!("[{AVTRDB}] Failed to check avatar: {status} | {text}");
         }
 
         let data = serde_json::from_str::<AvtrDBSearchResponse>(&text)?;
@@ -93,11 +91,7 @@ impl Provider for AvtrDB {
             attribution: self.attribution.clone(),
         };
 
-        debug!(
-            "[{}] Sending {:#?}",
-            Type::AVTRDB,
-            serde_json::to_string(&request)?
-        );
+        debug!("[{AVTRDB}] Sending {:#?}", serde_json::to_string(&request)?);
 
         let response = self
             .client
@@ -108,18 +102,18 @@ impl Provider for AvtrDB {
         let status = response.status();
         let text = response.text()?;
         let data = serde_json::from_str::<AvtrDBResponse>(&text)?;
-        debug!("[{}] {status} | {text}", Type::AVTRDB);
+        debug!("[{AVTRDB}] {status} | {text}");
 
         let unique = match status {
             StatusCode::OK => data.valid_avatar_ids == 1,
             StatusCode::TOO_MANY_REQUESTS => {
-                warn!("[{}] 429 Rate Limit, trying again in 10 seconds", Type::AVTRDB);
+                warn!("[{AVTRDB}] 429 Rate Limit, trying again in 10 seconds");
                 std::thread::sleep(Duration::from_secs(10));
                 self.send_avatar_id(avatar_id)?
             }
-            _ => bail!("[{}] Unknown Error: {status} | {text}", Type::AVTRDB),
+            _ => bail!("[{AVTRDB}] Unknown Error: {status} | {text}"),
         };
-        
+
         Ok(unique)
     }
 }

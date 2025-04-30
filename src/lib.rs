@@ -112,11 +112,11 @@ pub fn process_avatars(rx: &Receiver<PathBuf>) -> anyhow::Result<()> {
         #[cfg(feature = "avtrdb")]
         (Type::AVTRDB, box_db!(AvtrDB::default())),
         #[cfg(feature = "vrcwb")]
-        (Type::VRCWB, box_db!(VRCWB::default())),
+        (Type::VRCWB, box_db!(VrcWB::default())),
         #[cfg(feature = "vrcds")]
-        (Type::VRCDS, box_db!(VRCDS::default())),
+        (Type::VRCDS, box_db!(VrcDS::default())),
         #[cfg(feature = "vrcdb")]
-        (Type::VRCDB, box_db!(VRCDB::default())),
+        (Type::VRCDB, box_db!(VrcDB::default())),
     ]);
 
     #[cfg(feature = "cache")]

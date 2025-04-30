@@ -1,21 +1,21 @@
 use std::{collections::HashMap, time::Duration};
 
 use anyhow::{bail, Result};
-use reqwest::blocking::Client;
-use reqwest::StatusCode;
+use reqwest::{blocking::Client, StatusCode};
+
 use crate::{
-    provider::{Provider, Type},
+    provider::{Provider, Type::VRCDB},
     USER_AGENT,
 };
 
 const URL: &str = "https://search.bs002.de/api/Avatar/putavatar";
 
-pub struct VRCDB {
+pub struct VrcDB {
     client: Client,
     userid: String,
 }
 
-impl Default for VRCDB {
+impl Default for VrcDB {
     fn default() -> Self {
         Self {
             client: Client::default(),
@@ -24,7 +24,7 @@ impl Default for VRCDB {
     }
 }
 
-impl Provider for VRCDB {
+impl Provider for VrcDB {
     fn check_avatar_id(&self, _avatar_id: &str) -> Result<bool> {
         bail!("Cache Only")
     }
@@ -42,22 +42,22 @@ impl Provider for VRCDB {
 
         let status = response.status();
         let text = response.text()?;
-        debug!("[{}] {status} | {text}", Type::VRCDB);
+        debug!("[{VRCDB}] {status} | {text}");
 
         let unique = match status {
             StatusCode::OK => false,
             StatusCode::NOT_FOUND => true,
             StatusCode::TOO_MANY_REQUESTS => {
-                warn!("[{}] 429 Rate Limit, Please Wait 1 Minute...", Type::VRCDB);
+                warn!("[{VRCDB}] 429 Rate Limit, Please Wait 1 Minute...");
                 std::thread::sleep(Duration::from_secs(60));
                 self.send_avatar_id(avatar_id)?
             }
             StatusCode::INTERNAL_SERVER_ERROR => {
-                info!("^ Pending in Queue: {}", Type::VRCDB);
+                info!("^ Pending in Queue: {VRCDB}");
                 debug!("New Avatars can take up to a day to be processed");
                 true
             }
-            _ => bail!("[{}] {status} | {text}", Type::VRCDB),
+            _ => bail!("[{VRCDB}] {status} | {text}"),
         };
 
         Ok(unique)

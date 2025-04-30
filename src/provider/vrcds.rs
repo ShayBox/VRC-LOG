@@ -4,18 +4,18 @@ use anyhow::{bail, Result};
 use reqwest::{blocking::Client, StatusCode};
 
 use crate::{
-    provider::{Provider, Type},
+    provider::{Provider, Type::VRCDS},
     USER_AGENT,
 };
 
 const URL: &str = "https://avtr.nekosunevr.co.uk/v1/vrchat/avatars/store/putavatarExternal";
 
-pub struct VRCDS {
+pub struct VrcDS {
     client: Client,
     userid: String,
 }
 
-impl Default for VRCDS {
+impl Default for VrcDS {
     fn default() -> Self {
         Self {
             client: Client::default(),
@@ -24,13 +24,13 @@ impl Default for VRCDS {
     }
 }
 
-impl Provider for VRCDS {
+impl Provider for VrcDS {
     fn check_avatar_id(&self, _avatar_id: &str) -> Result<bool> {
         bail!("Cache Only")
     }
 
     fn send_avatar_id(&self, avatar_id: &str) -> Result<bool> {
-        let response = self
+        let Ok(response) = self
             .client
             .post(URL)
             .header("User-Agent", USER_AGENT)
@@ -39,19 +39,19 @@ impl Provider for VRCDS {
                 ("userid", &self.userid),
             ]))
             .timeout(Duration::from_secs(1)) // TODO: Remove when API is more stable.
-            .send()?;
+            .send()
+        else {
+            return Ok(false); // TODO: Ignore for cache purposes, it goes offline too often.
+        };
 
         let status = response.status();
         let text = response.text()?;
-        debug!("[{}] {status} | {text}", Type::VRCDS);
+        debug!("[{VRCDS}] {status} | {text}");
 
         let unique = match status {
             StatusCode::OK => false,
             StatusCode::NOT_FOUND => true,
-            _ => {
-                error!("[{}] {status} | {text}", Type::VRCDS);
-                false // TODO: Ignore for cache purposes, it goes offline too often.
-            }
+            _ => bail!("[{VRCDS}] {status} | {text}"),
         };
 
         Ok(unique)

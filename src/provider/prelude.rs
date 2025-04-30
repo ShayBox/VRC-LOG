@@ -3,8 +3,8 @@ pub use super::avtrdb::AvtrDB;
 #[cfg(feature = "cache")]
 pub use super::cache::Cache;
 #[cfg(feature = "vrcdb")]
-pub use super::vrcdb::VRCDB;
+pub use super::vrcdb::VrcDB;
 #[cfg(feature = "vrcds")]
-pub use super::vrcds::VRCDS;
+pub use super::vrcds::VrcDS;
 #[cfg(feature = "vrcwb")]
-pub use super::vrcwb::VRCWB;
+pub use super::vrcwb::VrcWB;
