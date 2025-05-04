@@ -3,6 +3,7 @@ extern crate tracing;
 
 use std::sync::OnceLock;
 
+use anyhow::Result;
 use chrono::{Local, Offset};
 #[cfg(feature = "title")]
 use crossterm::{execute, terminal::SetTitle};
@@ -16,10 +17,11 @@ use vrc_log::{
     CARGO_PKG_HOMEPAGE,
 };
 
-// Watchers will stop working if they get dropped.
+/* Watchers will stop working if they get dropped. */
 static WATCHERS: OnceLock<Vec<PollWatcher>> = OnceLock::new();
 
-fn main() -> anyhow::Result<()> {
+#[tokio::main]
+async fn main() -> Result<()> {
     #[cfg(feature = "title")]
     execute!(std::io::stdout(), SetTitle("VRC-LOG"))?;
 
@@ -37,7 +39,7 @@ fn main() -> anyhow::Result<()> {
         ))
         .init();
 
-    if vrc_log::check_for_updates()? {
+    if vrc_log::check_for_updates().await? {
         let text = "An update is available";
         let link = Link::new(text, CARGO_PKG_HOMEPAGE);
         info!("{link}");
@@ -51,5 +53,5 @@ fn main() -> anyhow::Result<()> {
     ]);
 
     vrc_log::launch_game(args)?;
-    vrc_log::process_avatars((tx, rx))
+    vrc_log::process_avatars((tx, rx)).await
 }

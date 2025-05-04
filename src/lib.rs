@@ -2,6 +2,7 @@
 extern crate tracing;
 
 use std::{
+    collections::VecDeque,
     env::Args,
     fs::File,
     io::{BufRead, BufReader, Error},
@@ -11,7 +12,7 @@ use std::{
     time::Duration,
 };
 
-use anyhow::{bail, Context};
+use anyhow::{bail, Result};
 use chrono::Local;
 use colored::{Color, Colorize};
 use crossbeam::channel::{Receiver, Sender};
@@ -20,7 +21,7 @@ use notify::{Config, Event, PollWatcher, RecursiveMode, Watcher};
 use parking_lot::RwLock;
 use terminal_link::Link;
 
-use crate::provider::{prelude::*, Providers, Type};
+use crate::provider::{prelude::*, Provider, Type};
 
 #[cfg(feature = "discord")]
 pub mod discord;
@@ -42,8 +43,8 @@ pub fn get_local_time() -> String {
 
 /// # Errors
 /// Will return `Err` if it couldn't get the GitHub repository.
-pub fn check_for_updates() -> reqwest::Result<bool> {
-    let response = reqwest::blocking::get(CARGO_PKG_HOMEPAGE)?;
+pub async fn check_for_updates() -> reqwest::Result<bool> {
+    let response = reqwest::get(CARGO_PKG_HOMEPAGE).await?;
     if let Some(mut segments) = response.url().path_segments() {
         if let Some(remote_version) = segments.next_back() {
             return Ok(remote_version > CARGO_PKG_VERSION);
@@ -90,7 +91,7 @@ pub fn watch<P: AsRef<Path>>(tx: Sender<PathBuf>, path: P) -> notify::Result<Pol
 /// Will return `Err` if `Command::spawn` errors
 /// # Panics
 /// Will panic if `Child::wait` panics
-pub fn launch_game(args: Args) -> anyhow::Result<()> {
+pub fn launch_game(args: Args) -> Result<()> {
     let args = args.collect::<Vec<_>>();
     if args.len() > 1 {
         let mut child = Command::new(&args[1])
@@ -110,29 +111,37 @@ pub fn launch_game(args: Args) -> anyhow::Result<()> {
 
 /// # Errors
 /// Will return `Err` if `Sqlite::new` or `Provider::send_avatar_id` errors
-pub fn process_avatars((_tx, rx): (Sender<PathBuf>, Receiver<PathBuf>)) -> anyhow::Result<()> {
-    #[cfg_attr(not(feature = "cache"), allow(unused_mut))]
-    let mut providers = Providers::from([
-        #[cfg(feature = "cache")]
-        (Type::CACHE, box_db!(Cache::new()?)),
+pub async fn process_avatars((_tx, rx): (Sender<PathBuf>, Receiver<PathBuf>)) -> Result<()> {
+    #[cfg(feature = "cache")]
+    let cache = Cache::new().await?;
+
+    #[cfg(feature = "avtrdb")]
+    let avtrdb = AvtrDB::default();
+
+    #[cfg(feature = "vrcdb")]
+    let vrcdb = VrcDB::default();
+
+    #[cfg(feature = "vrcds")]
+    let vrcds = VrcDS::default();
+
+    #[cfg(feature = "vrcwb")]
+    let vrcwb = VrcWB::default();
+
+    let providers = VecDeque::from([
         #[cfg(feature = "avtrdb")]
-        (Type::AVTRDB, box_db!(AvtrDB::default())),
-        #[cfg(feature = "vrcwb")]
-        (Type::VRCWB, box_db!(VrcWB::default())),
-        #[cfg(feature = "vrcds")]
-        (Type::VRCDS, box_db!(VrcDS::default())),
+        Type::AVTRDB(&avtrdb),
         #[cfg(feature = "vrcdb")]
-        (Type::VRCDB, box_db!(VrcDB::default())),
+        Type::VRCDB(&vrcdb),
+        #[cfg(feature = "vrcds")]
+        Type::VRCDS(&vrcds),
+        #[cfg(feature = "vrcwb")]
+        Type::VRCWB(&vrcwb),
     ]);
 
-    #[cfg(feature = "cache")]
-    let cache = providers.shift_remove(&Type::CACHE).context("None")?;
-
     while let Ok(path) = rx.recv() {
-        let avatar_ids = parse_avatar_ids(&path);
-        for avatar_id in avatar_ids {
+        for avatar_id in parse_avatar_ids(&path) {
             #[cfg(feature = "cache")] // Avatar already in cache
-            if !cache.check_avatar_id(&avatar_id)? {
+            if !cache.check_avatar_id(&avatar_id).await? {
                 continue;
             }
 
@@ -141,23 +150,32 @@ pub fn process_avatars((_tx, rx): (Sender<PathBuf>, Receiver<PathBuf>)) -> anyho
 
             print_colorized(&avatar_id);
 
-            for (provider_type, provider) in &providers {
-                match provider.send_avatar_id(&avatar_id) {
+            // Collect all provider futures for this avatar_id
+            let futures = providers
+                .iter()
+                .map(|provider| provider.send_avatar_id(&avatar_id));
+            let results = futures::future::join_all(futures).await;
+
+            for (provider, result) in providers.iter().zip(results) {
+                match result {
                     Ok(unique) => {
                         if unique {
-                            info!("^ Successfully Submitted to {provider_type}");
+                            info!("^ Successfully Submitted to {provider}");
                         }
                     }
                     Err(error) => {
-                        send_to_cache = false;
-                        error!("^ Failed to submit to {provider_type}: {error}");
+                        #[cfg(feature = "cache")]
+                        {
+                            send_to_cache = false;
+                        }
+                        error!("^ Failed to submit to {provider}: {error}");
                     }
                 }
             }
 
             #[cfg(feature = "cache")]
             if send_to_cache {
-                cache.send_avatar_id(&avatar_id)?;
+                cache.send_avatar_id(&avatar_id).await?;
             }
         }
     }

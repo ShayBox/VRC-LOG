@@ -1,10 +1,11 @@
 use std::{collections::HashMap, time::Duration};
 
 use anyhow::{bail, Result};
-use reqwest::{blocking::Client, StatusCode};
+use async_trait::async_trait;
+use reqwest::{Client, StatusCode};
 
 use crate::{
-    provider::{Provider, Type::VRCDS},
+    provider::{Provider, Type},
     USER_AGENT,
 };
 
@@ -24,12 +25,14 @@ impl Default for VrcDS {
     }
 }
 
+#[async_trait]
 impl Provider for VrcDS {
-    fn check_avatar_id(&self, _avatar_id: &str) -> Result<bool> {
-        bail!("Cache Only")
+    async fn check_avatar_id(&self, _avatar_id: &str) -> Result<bool> {
+        bail!("Unsupported/Unused")
     }
 
-    fn send_avatar_id(&self, avatar_id: &str) -> Result<bool> {
+    async fn send_avatar_id(&self, avatar_id: &str) -> Result<bool> {
+        let name = Type::VRCDS(self);
         let response = match self
             .client
             .post(URL)
@@ -38,25 +41,27 @@ impl Provider for VrcDS {
                 ("id", avatar_id),
                 ("userid", &self.userid),
             ]))
-            .timeout(Duration::from_secs(1)) // TODO: Remove when API is more stable.
+            .timeout(Duration::from_secs(3))
             .send()
+            .await
         {
             Ok(response) => response,
             Err(error) => {
                 // Ignore for cache purposes, it goes offline too often.
-                warn!("[{VRCDS}] {error}");
+                // TODO: Remove when API is more stable.
+                warn!("[{name}] {error}");
                 return Ok(false);
             }
         };
 
         let status = response.status();
-        let text = response.text()?;
-        debug!("[{VRCDS}] {status} | {text}");
+        let text = response.text().await?;
+        debug!("[{name}] {status} | {text}");
 
         let unique = match status {
             StatusCode::OK => false,
             StatusCode::NOT_FOUND => true,
-            _ => bail!("[{VRCDS}] {status} | {text}"),
+            _ => bail!("[{name}] {status} | {text}"),
         };
 
         Ok(unique)

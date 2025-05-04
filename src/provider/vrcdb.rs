@@ -1,10 +1,11 @@
 use std::{collections::HashMap, time::Duration};
 
 use anyhow::{bail, Result};
-use reqwest::{blocking::Client, StatusCode};
+use async_trait::async_trait;
+use reqwest::{Client, StatusCode};
 
 use crate::{
-    provider::{Provider, Type::VRCDB},
+    provider::{Provider, Type},
     USER_AGENT,
 };
 
@@ -24,12 +25,14 @@ impl Default for VrcDB {
     }
 }
 
+#[async_trait]
 impl Provider for VrcDB {
-    fn check_avatar_id(&self, _avatar_id: &str) -> Result<bool> {
-        bail!("Cache Only")
+    async fn check_avatar_id(&self, _avatar_id: &str) -> Result<bool> {
+        bail!("Unsupported/Unused")
     }
 
-    fn send_avatar_id(&self, avatar_id: &str) -> Result<bool> {
+    async fn send_avatar_id(&self, avatar_id: &str) -> Result<bool> {
+        let name = Type::VRCDB(self);
         let response = self
             .client
             .put(URL)
@@ -38,26 +41,28 @@ impl Provider for VrcDB {
                 ("id", avatar_id),
                 ("userid", &self.userid),
             ]))
-            .send()?;
+            .timeout(Duration::from_secs(3))
+            .send()
+            .await?;
 
         let status = response.status();
-        let text = response.text()?;
-        debug!("[{VRCDB}] {status} | {text}");
+        let text = response.text().await?;
+        debug!("[{name}] {status} | {text}");
 
         let unique = match status {
             StatusCode::OK => false,
             StatusCode::NOT_FOUND => true,
             StatusCode::TOO_MANY_REQUESTS => {
-                warn!("[{VRCDB}] 429 Rate Limit, Please Wait 1 Minute...");
-                std::thread::sleep(Duration::from_secs(60));
-                self.send_avatar_id(avatar_id)?
+                warn!("[{name}] 429 Rate Limit, Please Wait 1 Minute...");
+                tokio::time::sleep(Duration::from_secs(60)).await;
+                Box::pin(self.send_avatar_id(avatar_id)).await?
             }
             StatusCode::INTERNAL_SERVER_ERROR => {
-                info!("^ Pending in Queue: {VRCDB}");
+                info!("^ Pending in Queue: {name}");
                 debug!("New Avatars can take up to a day to be processed");
                 true
             }
-            _ => bail!("[{VRCDB}] {status} | {text}"),
+            _ => bail!("[{name}] {status} | {text}"),
         };
 
         Ok(unique)
