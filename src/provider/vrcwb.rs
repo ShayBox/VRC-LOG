@@ -52,6 +52,11 @@ impl Provider for VrcWB {
         let unique = match status {
             StatusCode::OK => false,
             StatusCode::NOT_FOUND => true,
+            StatusCode::TOO_MANY_REQUESTS => {
+                warn!("[{name}] 429 Rate Limit, Please Wait 1 Minute...");
+                tokio::time::sleep(Duration::from_secs(60)).await;
+                Box::pin(self.send_avatar_id(avatar_id)).await?
+            }
             _ => bail!("[{name}] {status} | {text}"),
         };
 
