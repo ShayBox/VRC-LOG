@@ -14,6 +14,8 @@ pub mod vrcdb;
 pub mod vrcds;
 #[cfg(feature = "vrcwb")]
 pub mod vrcwb;
+#[cfg(feature = "paw")]
+pub mod paw;
 
 pub mod prelude;
 
@@ -33,6 +35,9 @@ pub enum Type<'a> {
     #[cfg(feature = "vrcwb")]
     #[strum(to_string = "VRCWB - World Balancer")]
     VRCWB(&'a VrcWB),
+    #[cfg(feature = "paw")]
+    #[strum(to_string = "PAW - Puppy's Avatar World")]
+    PAW(&'a Paw),
 }
 
 #[async_trait]
@@ -74,6 +79,8 @@ impl Provider for Type<'_> {
             Type::VRCDS(p) => p.send_avatar_id(avatar_id).await,
             #[cfg(feature = "vrcwb")]
             Type::VRCWB(p) => p.send_avatar_id(avatar_id).await,
+            #[cfg(feature = "paw")]
+            Type::PAW(p) => p.send_avatar_id(avatar_id).await,
         }
     }
 }

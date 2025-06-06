@@ -8,3 +8,5 @@ pub use super::vrcdb::VrcDB;
 pub use super::vrcds::VrcDS;
 #[cfg(feature = "vrcwb")]
 pub use super::vrcwb::VrcWB;
+#[cfg(feature = "paw")]
+pub use super::paw::Paw;

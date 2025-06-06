@@ -38,7 +38,7 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "time"] }
 
 [features]
-default = ["cache", "avtrdb", "vrcdb", "vrcds", "vrcwb", "title"]
+default = ["cache", "avtrdb", "vrcdb", "vrcds", "vrcwb", "paw", "title"]
 
 # VRChat Avatar Database Providers
 cache = ["dep:tokio-rusqlite-new"]
@@ -46,6 +46,7 @@ avtrdb = ["dep:reqwest", "discord"]
 vrcdb = ["dep:reqwest", "discord"]
 vrcds = ["dep:reqwest", "discord"]
 vrcwb = ["dep:reqwest", "discord"]
+paw = ["dep:reqwest"]
 
 discord = ["dep:discord-presence", "dep:cached"]
 title = ["dep:crossterm"]
