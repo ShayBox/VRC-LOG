@@ -30,6 +30,7 @@ struct PawResponse {
     success: bool,
     code: u16,
     result: Option<serde_json::Value>,
+    avatar: Option<serde_json::Value>,
 }
 
 #[async_trait]
@@ -74,7 +75,11 @@ impl Provider for Paw {
         debug!("[{name}] {status} | {text}");
 
         let unique = match status {
-            StatusCode::OK => false,
+            StatusCode::OK => {
+                let data = serde_json::from_str::<PawResponse>(&text)?;
+
+                !matches!(data.avatar.as_ref(), Some(avatar) if !avatar.is_null() && !(avatar.is_array() && avatar.as_array().unwrap().is_empty()))
+            },
             StatusCode::TOO_MANY_REQUESTS => {
                 warn!("[{name}] 429 Rate Limit, Please Wait 10 seconds...");
                 tokio::time::sleep(Duration::from_secs(10)).await;
