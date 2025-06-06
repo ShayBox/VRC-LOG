@@ -127,6 +127,9 @@ pub async fn process_avatars((_tx, rx): (Sender<PathBuf>, Receiver<PathBuf>)) ->
     #[cfg(feature = "vrcwb")]
     let vrcwb = VrcWB::default();
 
+    #[cfg(feature = "paw")]
+    let paw = Paw::default();
+
     let providers = VecDeque::from([
         #[cfg(feature = "avtrdb")]
         Type::AVTRDB(&avtrdb),
@@ -136,6 +139,8 @@ pub async fn process_avatars((_tx, rx): (Sender<PathBuf>, Receiver<PathBuf>)) ->
         Type::VRCDS(&vrcds),
         #[cfg(feature = "vrcwb")]
         Type::VRCWB(&vrcwb),
+        #[cfg(feature = "paw")]
+        Type::PAW(&paw),
     ]);
 
     while let Ok(path) = rx.recv() {

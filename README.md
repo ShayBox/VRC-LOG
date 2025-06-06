@@ -44,6 +44,7 @@ Place the file in the VRChat directory or `PATH` and set your launch options
 - [VRCDB - Avatar Search] - [Discord](https://discord.gg/q427ecnUvj) / [VRCX](https://vrcx.vrcdb.com/avatars/Avatar/VRCX) / [Web](https://vrcdb.com) / [World](https://vrchat.com/home/world/wrld_1146f625-5d42-40f5-bfe7-06a7664e2796)
 - [VRCDS - Project Dark Star] - [Discord](https://discord.gg/QT4uatfU8h) / [VRCX](https://avtr.nekosunevr.co.uk/vrcx_search) / [Web](https://avtr.nekosunevr.co.uk)
 - [VRCWB - World Balancer] - [Discord](https://discord.gg/Uw7aAShdsp) / [VRCX](https://avatar.worldbalancer.com/vrcx_search.php) / [Web](https://avatar.worldbalancer.com/search.php)
+- [PAW - Puppy's Avatar World] - [Discord](https://discord.gg/zHhs4nQYxX) / [VRCX](https://paw-api.amelia.fun/vrcx_search) / [Web](https://paw.amelia.fun)
 
 #### Unsupported Avatar Database Providers
 
@@ -66,3 +67,5 @@ Additional contributions welcome, please open an issue, pull request, or join Di
 [VRCWB - World Balancer]: https://avatar.worldbalancer.com
 
 [VRCX]: https://github.com/vrcx-team/VRCX?tab=readme-ov-file#--vrcx
+
+[PAW - Puppy's Avatar World]: https://paw.amelia.fun
