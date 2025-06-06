@@ -1,6 +1,6 @@
 [package]
 name = "vrc-log"
-version = "0.12.1"
+version = "0.12.2"
 authors = ["Shayne Hartford <shaybox@shaybox.com>"]
 edition = "2021"
 description = "VRChat Local Avatar ID Logger"
@@ -33,7 +33,7 @@ strum = { version = "0.27", features = ["derive"] }
 terminal-link = "0.1"
 time = { version = "0.3", features = ["macros"] }
 tokio = { version = "1", features = ["full"] }
-tokio-rusqlite-new = { version = "0.9", features = ["bundled"], optional = true }
+tokio-rusqlite-new = { version = "0.10", features = ["bundled"], optional = true }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "time"] }
 
