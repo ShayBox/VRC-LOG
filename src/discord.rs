@@ -38,12 +38,7 @@ impl Discord {
 }
 
 #[once(option = true, sync_writes = true)]
-pub fn get_user_id() -> Option<String> {
-    if let Ok(user_id) = std::env::var("DISCORD") {
-        /* TODO: Validate User ID (Snowflake) - Regex? */
-        return Some(user_id);
-    }
-
+pub fn get_user() -> Option<PartialUser> {
     let discord = Discord::start();
     std::thread::sleep(Duration::from_secs(5));
     discord.client.shutdown().ok()?;
@@ -55,20 +50,18 @@ pub fn get_user_id() -> Option<String> {
                     info!("[Discord] Authenticated as {username}");
                 }
 
-                return Some(user_id.clone());
+                return Some(user.clone());
             }
 
             warn!("Vesktop & arRPC doesn't support fetching user info");
             warn!("You can supply the 'DISCORD' env variable manually");
-            warn!("The User ID will default to the developer: ShayBox");
         }
     } else {
         warn!("Error: Discord RPC Connection Failed\n");
         warn!("This may be due to one of the following reasons:");
         warn!("1. Discord is not running on your system.");
         warn!("2. VRC-LOG was restarted too quickly.\n");
-        warn!("The User ID will default to the developer: ShayBox");
     }
 
-    Some(String::from(DEVELOPER_ID))
+    None
 }

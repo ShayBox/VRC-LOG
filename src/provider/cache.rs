@@ -2,7 +2,10 @@ use anyhow::Result;
 use async_trait::async_trait;
 use tokio_rusqlite_new::{Connection, Error};
 
-use crate::{provider::Provider, vrchat::VRCHAT_LOW_PATH};
+use crate::{
+    provider::{Provider, ProviderKind},
+    vrchat::VRCHAT_LOW_PATH,
+};
 
 pub struct Cache {
     connection: Connection,
@@ -79,6 +82,10 @@ impl Cache {
 
 #[async_trait]
 impl Provider for Cache {
+    fn kind(&self) -> ProviderKind {
+        ProviderKind::CACHE
+    }
+
     async fn check_avatar_id(&self, avatar_id: &str) -> Result<bool> {
         let id = avatar_id.to_string();
         let query = "

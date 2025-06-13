@@ -2,7 +2,6 @@
 extern crate tracing;
 
 use std::{
-    collections::VecDeque,
     env::Args,
     fs::File,
     io::{BufRead, BufReader, Error},
@@ -21,11 +20,15 @@ use notify::{Config, Event, PollWatcher, RecursiveMode, Watcher};
 use parking_lot::RwLock;
 use terminal_link::Link;
 
-use crate::provider::{prelude::*, Provider, Type};
+use crate::{
+    provider::{prelude::*, Provider, ProviderKind},
+    settings::Settings,
+};
 
 #[cfg(feature = "discord")]
 pub mod discord;
 pub mod provider;
+pub mod settings;
 pub mod vrchat;
 
 pub const CARGO_PKG_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -111,37 +114,30 @@ pub fn launch_game(args: Args) -> Result<()> {
 
 /// # Errors
 /// Will return `Err` if `Sqlite::new` or `Provider::send_avatar_id` errors
-pub async fn process_avatars((_tx, rx): (Sender<PathBuf>, Receiver<PathBuf>)) -> Result<()> {
+pub async fn process_avatars(
+    settings: Settings,
+    (_tx, rx): (Sender<PathBuf>, Receiver<PathBuf>),
+) -> Result<()> {
     #[cfg(feature = "cache")]
     let cache = Cache::new().await?;
-
-    #[cfg(feature = "avtrdb")]
-    let avtrdb = AvtrDB::default();
-
-    #[cfg(feature = "vrcdb")]
-    let vrcdb = VrcDB::default();
-
-    #[cfg(feature = "vrcds")]
-    let vrcds = VrcDS::default();
-
-    #[cfg(feature = "vrcwb")]
-    let vrcwb = VrcWB::default();
-
-    #[cfg(feature = "paw")]
-    let paw = Paw::default();
-
-    let providers = VecDeque::from([
-        #[cfg(feature = "avtrdb")]
-        Type::AVTRDB(&avtrdb),
-        #[cfg(feature = "vrcdb")]
-        Type::VRCDB(&vrcdb),
-        #[cfg(feature = "vrcds")]
-        Type::VRCDS(&vrcds),
-        #[cfg(feature = "vrcwb")]
-        Type::VRCWB(&vrcwb),
-        #[cfg(feature = "paw")]
-        Type::PAW(&paw),
-    ]);
+    let providers = settings
+        .providers
+        .iter()
+        .filter_map(|provider| match provider {
+            #[cfg(feature = "cache")]
+            ProviderKind::CACHE => None,
+            #[cfg(feature = "avtrdb")]
+            ProviderKind::AVTRDB => provider!(AvtrDB::new(&settings)),
+            #[cfg(feature = "paw")]
+            ProviderKind::PAW => provider!(Paw::new(&settings)),
+            #[cfg(feature = "vrcdb")]
+            ProviderKind::VRCDB => provider!(VrcDB::new(&settings)),
+            #[cfg(feature = "vrcds")]
+            ProviderKind::VRCDS => provider!(VrcDS::new(&settings)),
+            #[cfg(feature = "vrcwb")]
+            ProviderKind::VRCWB => provider!(VrcWB::new(&settings)),
+        })
+        .collect::<Vec<_>>();
 
     while let Ok(path) = rx.recv() {
         for avatar_id in parse_avatar_ids(&path) {
@@ -162,10 +158,11 @@ pub async fn process_avatars((_tx, rx): (Sender<PathBuf>, Receiver<PathBuf>)) ->
             let results = futures::future::join_all(futures).await;
 
             for (provider, result) in providers.iter().zip(results) {
+                let kind = provider.kind();
                 match result {
                     Ok(unique) => {
                         if unique {
-                            info!("^ Successfully Submitted to {provider}");
+                            info!("^ Successfully Submitted to {kind}");
                         }
                     }
                     Err(error) => {
@@ -173,7 +170,7 @@ pub async fn process_avatars((_tx, rx): (Sender<PathBuf>, Receiver<PathBuf>)) ->
                         {
                             send_to_cache = false;
                         }
-                        error!("^ Failed to submit to {provider}: {error}");
+                        error!("^ Failed to submit to {kind}: {error}");
                     }
                 }
             }

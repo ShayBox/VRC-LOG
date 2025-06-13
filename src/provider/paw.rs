@@ -1,25 +1,30 @@
-use std::{time::Duration};
+use std::time::Duration;
 
 use anyhow::{bail, Result};
 use async_trait::async_trait;
 use reqwest::{Client, StatusCode};
 use serde::Deserialize;
+use serde_json::Value;
 
 use crate::{
-    provider::{Provider, Type},
+    provider::{Provider, ProviderKind},
+    settings::Settings,
     USER_AGENT,
 };
 
 const URL: &str = "https://paw-api.amelia.fun/update";
 const AVATAR_URL: &str = "https://paw-api.amelia.fun/avatar";
 
-pub struct Paw {
-    client: Client,
+pub struct Paw<'a> {
+    settings: &'a Settings,
+    client:   Client,
 }
 
-impl Default for Paw {
-    fn default() -> Self {
+impl<'a> Paw<'a> {
+    #[must_use]
+    pub fn new(settings: &'a Settings) -> Self {
         Self {
+            settings,
             client: Client::default(),
         }
     }
@@ -28,15 +33,19 @@ impl Default for Paw {
 #[derive(Debug, Deserialize)]
 struct PawResponse {
     success: bool,
-    code: u16,
-    result: Option<serde_json::Value>,
-    avatar: Option<serde_json::Value>,
+    code:    u16,
+    result:  Option<Value>,
+    avatar:  Option<Value>,
 }
 
 #[async_trait]
-impl Provider for Paw {
+impl Provider for Paw<'_> {
+    fn kind(&self) -> ProviderKind {
+        ProviderKind::PAW
+    }
+
     async fn check_avatar_id(&self, _avatar_id: &str) -> Result<bool> {
-        let name = Type::PAW(self);
+        let kind = self.kind();
         let response = self
             .client
             .get(AVATAR_URL)
@@ -48,10 +57,10 @@ impl Provider for Paw {
 
         let status = response.status();
         let text = response.text().await?;
-        debug!("[{name}] {status} | {text}");
+        debug!("[{kind}] {status} | {text}");
 
         if status != StatusCode::OK {
-            bail!("[{name}] Failed to check avatar: {status} | {text}");
+            bail!("[{kind}] Failed to check avatar: {status} | {text}");
         }
 
         let data = serde_json::from_str::<PawResponse>(&text)?;
@@ -60,7 +69,7 @@ impl Provider for Paw {
     }
 
     async fn send_avatar_id(&self, avatar_id: &str) -> Result<bool> {
-        let name = Type::PAW(self);
+        let kind = self.kind();
         let response = self
             .client
             .post(URL)
@@ -72,20 +81,20 @@ impl Provider for Paw {
 
         let status = response.status();
         let text = response.text().await?;
-        debug!("[{name}] {status} | {text}");
+        debug!("[{kind}] {status} | {text}");
 
         let unique = match status {
             StatusCode::OK => {
                 let data = serde_json::from_str::<PawResponse>(&text)?;
 
                 !matches!(data.avatar.as_ref(), Some(avatar) if !avatar.is_null() && !(avatar.is_array() && avatar.as_array().unwrap().is_empty()))
-            },
+            }
             StatusCode::TOO_MANY_REQUESTS => {
-                warn!("[{name}] 429 Rate Limit, Please Wait 10 seconds...");
+                warn!("[{kind}] 429 Rate Limit, Please Wait 10 seconds...");
                 tokio::time::sleep(Duration::from_secs(10)).await;
                 Box::pin(self.send_avatar_id(avatar_id)).await?
             }
-            _ => bail!("[{name}] {status} | {text}"),
+            _ => bail!("[{kind}] {status} | {text}"),
         };
 
         Ok(unique)

@@ -1,22 +1,23 @@
 #[macro_use]
 extern crate tracing;
 
-use std::sync::OnceLock;
+use std::{io::ErrorKind, sync::OnceLock};
 
 use anyhow::Result;
 use chrono::{Local, Offset};
 #[cfg(feature = "title")]
 use crossterm::{execute, terminal::SetTitle};
+use derive_config::{ConfigError, DeriveTomlConfig};
 use notify::PollWatcher;
 use terminal_link::Link;
 use time::{macros::format_description, UtcOffset};
 use tracing::level_filters::LevelFilter;
 use tracing_subscriber::{fmt::time::OffsetTime, EnvFilter};
 use vrc_log::{
+    settings::Settings,
     vrchat::{VRCHAT_AMP_PATH, VRCHAT_LOW_PATH},
     CARGO_PKG_HOMEPAGE,
 };
-
 /* Watchers will stop working if they get dropped. */
 static WATCHERS: OnceLock<Vec<PollWatcher>> = OnceLock::new();
 
@@ -46,12 +47,24 @@ async fn main() -> Result<()> {
     }
 
     let args = std::env::args();
+    let settings = Settings::load().unwrap_or_else(|error| match error {
+        ConfigError::Io(error) if error.kind() == ErrorKind::NotFound => {
+            info!("Welcome to VRC-LOG! Please follow the setup wizard");
+            Settings::try_wizard().expect("Failed to setup wizard")
+        }
+        error => {
+            error!("There was an error loading the settings: {error}");
+            Settings::try_wizard().expect("Failed to setup wizard")
+        }
+    });
+
     let (tx, rx) = crossbeam::channel::unbounded();
     let _ = WATCHERS.set(vec![
         vrc_log::watch(tx.clone(), VRCHAT_AMP_PATH.as_path())?,
         vrc_log::watch(tx.clone(), VRCHAT_LOW_PATH.as_path())?,
     ]);
 
+    settings.save()?;
     vrc_log::launch_game(args)?;
-    vrc_log::process_avatars((tx, rx)).await
+    vrc_log::process_avatars(settings, (tx, rx)).await
 }
