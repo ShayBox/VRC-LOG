@@ -15,6 +15,7 @@ impl Cache {
     /// # Errors
     /// Will return `Err` if `sqlite::open` errors
     pub async fn new() -> Result<Self> {
+        debug!("Trying to open SQLite cache database.");
         let path = VRCHAT_LOW_PATH.join("avatars.sqlite");
         let connection = Connection::open(path).await?;
 
@@ -26,15 +27,17 @@ impl Cache {
                     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
                 )";
 
-                // Create the table if it doesn't exist
+                debug!("Trying to create avatars table...");
                 if connection.execute(query, []).is_err() {
-                    // Ensure `created_at` and `updated_at` columns exist
+                    debug!("The avatars table already exists.");
+
                     let mut statement = connection.prepare("PRAGMA table_info(avatars)")?;
                     let columns = statement
                         .query_map([], |row| row.get::<_, String>(1))?
                         .collect::<Result<Vec<_>, _>>()?;
 
                     if !columns.contains(&"created_at".to_string()) {
+                        debug!("Trying to create the created_at column.");
                         #[rustfmt::skip]
                         connection.execute("
                             ALTER TABLE avatars
@@ -42,6 +45,7 @@ impl Cache {
                         ", [])?;
                     }
 
+                    debug!("Updating all rows with missing created_at");
                     #[rustfmt::skip]
                     connection.execute("
                         UPDATE avatars
@@ -50,28 +54,30 @@ impl Cache {
                     ", [])?;
 
                     if !columns.contains(&"updated_at".to_string()) {
+                        debug!("Trying to create the updated_at column.");
                         #[rustfmt::skip]
                         connection.execute("
                             ALTER TABLE avatars
                             ADD COLUMN updated_at DATETIME
                         ", [])?;
                     }
+
+                    debug!("Updating all rows with missing updated_at");
+                    #[rustfmt::skip]
+                    connection.execute("
+                        UPDATE avatars
+                        SET updated_at = datetime('now', '-31 days')
+                        WHERE updated_at IS NULL
+                    ", [])?;
                 }
 
-                #[rustfmt::skip] // Prevent a large burst after updating
-                connection.execute("
-                    UPDATE avatars
-                    SET updated_at = datetime('now', '-31 days')
-                    WHERE updated_at IS NULL
-                ", [])?;
-
+                debug!("Trying to create an updated_at index.");
                 #[rustfmt::skip] // Speed up queries on large databases
                 connection.execute("
                     CREATE INDEX IF NOT EXISTS idx_avatars_updated_at
                     ON avatars(updated_at)
                 ", [])?;
 
-                // Print cache statistics
                 if let Ok(mut statement) = connection.prepare("SELECT COUNT(*) FROM avatars") {
                     if let Ok(count) = statement.query_row([], |row| row.get::<_, i64>(0)) {
                         info!("{} Cached Avatars", count);
@@ -93,6 +99,7 @@ impl Provider for Cache {
     }
 
     async fn check_avatar_id(&self, avatar_id: &str) -> Result<bool> {
+        let kind = self.kind();
         let id = avatar_id.to_string();
         let query = "
             SELECT EXISTS(
@@ -101,12 +108,17 @@ impl Provider for Cache {
             )
         ";
 
-        let is_ok = self
+        let exists = self
             .connection
-            .call(move |c| Ok::<bool, Error>(c.execute(query, [id]).is_ok()))
+            .call(move |c| {
+                let mut stmt = c.prepare(query)?;
+                let result: i64 = stmt.query_row([id], |row| row.get(0))?;
+                Ok::<bool, Error>(result == 1)
+            })
             .await?;
 
-        Ok(is_ok)
+        debug!("[{kind}] Checking {avatar_id} | Exists: {exists}");
+        Ok(!exists)
     }
 
     async fn send_avatar_id(&self, avatar_id: &str) -> Result<bool> {
