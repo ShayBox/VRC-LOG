@@ -1,4 +1,4 @@
-use std::{collections::HashMap, time::Duration};
+use std::time::Duration;
 
 use anyhow::{bail, Result};
 use async_trait::async_trait;
@@ -6,7 +6,7 @@ use reqwest::{Client, StatusCode};
 use serde_json::json;
 
 use crate::{
-    provider::{avtrdb::AvtrDB, Provider, ProviderKind},
+    provider::{Provider, ProviderKind},
     settings::Settings,
     USER_AGENT,
 };

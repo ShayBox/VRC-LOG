@@ -56,19 +56,25 @@ impl Cache {
                             ADD COLUMN updated_at DATETIME
                         ", [])?;
                     }
+                }
 
-                    #[rustfmt::skip] // Prevent a large burst after updating
-                    connection.execute("
-                        UPDATE avatars
-                        SET updated_at = datetime('now', '-31 days')
-                        WHERE updated_at IS NULL
-                    ", [])?;
+                #[rustfmt::skip] // Prevent a large burst after updating
+                connection.execute("
+                    UPDATE avatars
+                    SET updated_at = datetime('now', '-31 days')
+                    WHERE updated_at IS NULL
+                ", [])?;
 
-                    // Print cache statistics
-                    if let Ok(mut statement) = connection.prepare("SELECT COUNT(*) FROM avatars") {
-                        if let Ok(count) = statement.query_row([], |row| row.get::<_, i64>(0)) {
-                            info!("{} Cached Avatars", count);
-                        }
+                #[rustfmt::skip] // Speed up queries on large databases
+                connection.execute("
+                    CREATE INDEX IF NOT EXISTS idx_avatars_updated_at
+                    ON avatars(updated_at)
+                ", [])?;
+
+                // Print cache statistics
+                if let Ok(mut statement) = connection.prepare("SELECT COUNT(*) FROM avatars") {
+                    if let Ok(count) = statement.query_row([], |row| row.get::<_, i64>(0)) {
+                        info!("{} Cached Avatars", count);
                     }
                 }
 
@@ -89,9 +95,10 @@ impl Provider for Cache {
     async fn check_avatar_id(&self, avatar_id: &str) -> Result<bool> {
         let id = avatar_id.to_string();
         let query = "
-            SELECT 1 FROM avatars
-            WHERE id = (?) AND updated_at >= datetime('now', '-30 days')
-            LIMIT 1
+            SELECT EXISTS(
+                SELECT 1 FROM avatars
+                WHERE id = ? AND updated_at >= datetime('now', '-30 days')
+            )
         ";
 
         let is_ok = self

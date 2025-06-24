@@ -3,7 +3,7 @@ use std::{time::Duration, vec};
 use anyhow::{bail, Result};
 use async_trait::async_trait;
 use reqwest::{Client, StatusCode, Url};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use serde_json::{json, Value};
 
 use crate::{
