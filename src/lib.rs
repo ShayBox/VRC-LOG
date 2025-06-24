@@ -3,7 +3,8 @@ extern crate tracing;
 
 use std::{
     env::Args,
-    fs::File,
+    ffi::OsStr,
+    fs::{create_dir_all, File},
     io::{BufRead, BufReader, Error},
     path::{Path, PathBuf},
     process::{Command, Stdio},
@@ -60,13 +61,18 @@ pub async fn check_for_updates() -> reqwest::Result<bool> {
 /// # Errors
 /// Will return `Err` if `PollWatcher::watch` errors
 pub fn watch<P: AsRef<Path>>(tx: Sender<PathBuf>, path: P) -> notify::Result<PollWatcher> {
+    let path = path.as_ref();
+    debug!("Watching {path:?}");
+
     let tx_clone = tx.clone();
     let mut watcher = PollWatcher::with_initial_scan(
         move |watch_event: notify::Result<Event>| {
             if let Ok(event) = watch_event {
                 for path in event.paths {
-                    if !path.ends_with(".log") {
-                        let _ = tx.send(path);
+                    if let Some(extension) = path.extension().and_then(OsStr::to_str) {
+                        if ["log", "txt"].contains(&extension) {
+                            let _ = tx.send(path);
+                        }
                     }
                 }
             }
@@ -76,14 +82,16 @@ pub fn watch<P: AsRef<Path>>(tx: Sender<PathBuf>, path: P) -> notify::Result<Pol
             .with_poll_interval(Duration::from_secs(1)),
         move |scan_event: notify::Result<PathBuf>| {
             if let Ok(path) = scan_event {
-                if !path.ends_with(".log") {
-                    let _ = tx_clone.send(path);
+                if let Some(extension) = path.extension().and_then(OsStr::to_str) {
+                    if ["log", "txt"].contains(&extension) {
+                        let _ = tx_clone.send(path);
+                    }
                 }
             }
         },
     )?;
 
-    watcher.watch(path.as_ref(), RecursiveMode::NonRecursive)?;
+    watcher.watch(path, RecursiveMode::NonRecursive)?;
 
     Ok(watcher)
 }
@@ -195,7 +203,15 @@ pub fn parse_path_env(path: &str) -> Result<PathBuf, Error> {
         std::env::var(env).unwrap_or_else(|_| panic!("Environment Variable not found: {env}"))
     });
 
-    std::fs::canonicalize(path.as_ref())
+    let path = Path::new(path.as_ref());
+    if !path.exists() {
+        if let Some(parent) = path.parent() {
+            create_dir_all(parent)?;
+        }
+        File::create(path)?;
+    }
+
+    std::fs::canonicalize(path)
 }
 
 #[must_use]
