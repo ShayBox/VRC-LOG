@@ -1,6 +1,6 @@
 [package]
 name = "vrc-log"
-version = "0.13.3"
+version = "0.13.4"
 authors = ["Shayne Hartford <shaybox@shaybox.com>"]
 edition = "2021"
 description = "VRChat Local Avatar ID Logger"
@@ -16,13 +16,13 @@ categories = ["config", "database", "filesystem", "games", "parsing"]
 [dependencies]
 anyhow = "1"
 async-trait = "0.1"
-cached = { version = "0.55", optional = true }
+cached = { version = "0.56", optional = true }
 chrono = "0.4"
 colored = "3"
 crossbeam = "0.8"
 crossterm = { version = "0.29", optional = true }
 derive-config = { version = "2", features = ["dirs", "toml"] }
-discord-presence = { version = "1", optional = true }
+discord-presence = { version = "2", optional = true }
 futures = "0.3"
 inquire = "0.7"
 lazy-regex = "3"
@@ -35,7 +35,7 @@ strum = { version = "0.27", features = ["derive"] }
 terminal-link = "0.1"
 time = { version = "0.3", features = ["macros"] }
 tokio = { version = "1", features = ["full"] }
-tokio-rusqlite-new = { version = "0.10", features = ["bundled"], optional = true }
+tokio-rusqlite-new = { version = "0.11", features = ["bundled"], optional = true }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "time"] }
 

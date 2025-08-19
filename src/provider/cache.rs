@@ -117,7 +117,7 @@ impl Provider for Cache {
             })
             .await?;
 
-        debug!("[{kind}] Checking {avatar_id} | Exists: {exists}");
+        trace!("[{kind}] Checking {avatar_id} | Exists: {exists}");
         Ok(!exists)
     }
 

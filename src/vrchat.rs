@@ -12,7 +12,7 @@ use serde::{Deserialize, Deserializer, Serialize};
 const AMP_PATH: &str = "%Temp%\\VRChat\\VRChat\\amplitude.cache";
 
 #[cfg(target_os = "linux")]
-const AMP_PATH: &str = "$HOME/.local/share/Steam/steamapps/compatdata/438100/pfx/drive_c/users/steamuser/Temp/VRChat/VRChat/amplitude.cache";
+const AMP_PATH: &str = "$HOME/.local/share/Steam/steamapps/compatdata/438100/pfx/drive_c/users/steamuser/AppData/Local/Temp/VRChat/VRChat/amplitude.cache";
 
 #[cfg(target_os = "windows")]
 const LOW_PATH: &str = "%AppData%\\..\\LocalLow\\VRChat\\VRChat";
