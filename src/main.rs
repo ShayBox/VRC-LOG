@@ -60,8 +60,8 @@ async fn main() -> Result<()> {
 
     let (tx, rx) = crossbeam::channel::unbounded();
     let _ = WATCHERS.set(vec![
-        vrc_log::watch(tx.clone(), VRCHAT_AMP_PATH.as_path())?,
-        vrc_log::watch(tx.clone(), VRCHAT_LOW_PATH.as_path())?,
+        vrc_log::watch(tx.clone(), VRCHAT_AMP_PATH.as_path(), 100)?,
+        vrc_log::watch(tx.clone(), VRCHAT_LOW_PATH.as_path(), 1_000)?,
     ]);
 
     settings.save()?;

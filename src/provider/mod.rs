@@ -40,7 +40,7 @@ pub enum ProviderKind {
 }
 
 #[async_trait]
-pub trait Provider {
+pub trait Provider: Send + Sync {
     /// # Return the `ProviderKind`
     fn kind(&self) -> ProviderKind;
 

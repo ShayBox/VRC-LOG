@@ -60,7 +60,11 @@ pub async fn check_for_updates() -> reqwest::Result<bool> {
 
 /// # Errors
 /// Will return `Err` if `PollWatcher::watch` errors
-pub fn watch<P: AsRef<Path>>(tx: Sender<PathBuf>, path: P) -> notify::Result<PollWatcher> {
+pub fn watch<P: AsRef<Path>>(
+    tx: Sender<PathBuf>,
+    path: P,
+    millis: u64,
+) -> notify::Result<PollWatcher> {
     let path = path.as_ref();
     debug!("Watching {path:?}");
 
@@ -71,6 +75,11 @@ pub fn watch<P: AsRef<Path>>(tx: Sender<PathBuf>, path: P) -> notify::Result<Pol
                 for path in event.paths {
                     if let Some(extension) = path.extension().and_then(OsStr::to_str) {
                         if ["log", "txt"].contains(&extension) {
+                            let _ = tx.send(path.clone());
+                        }
+                    }
+                    if let Some(filename) = path.file_name().and_then(OsStr::to_str) {
+                        if filename == "amplitude.cache" {
                             let _ = tx.send(path);
                         }
                     }
@@ -79,11 +88,16 @@ pub fn watch<P: AsRef<Path>>(tx: Sender<PathBuf>, path: P) -> notify::Result<Pol
         },
         Config::default()
             .with_compare_contents(true)
-            .with_poll_interval(Duration::from_secs(1)),
+            .with_poll_interval(Duration::from_millis(millis)),
         move |scan_event: notify::Result<PathBuf>| {
             if let Ok(path) = scan_event {
                 if let Some(extension) = path.extension().and_then(OsStr::to_str) {
                     if ["log", "txt"].contains(&extension) {
+                        let _ = tx_clone.send(path.clone());
+                    }
+                }
+                if let Some(filename) = path.file_name().and_then(OsStr::to_str) {
+                    if filename == "amplitude.cache" {
                         let _ = tx_clone.send(path);
                     }
                 }
@@ -148,7 +162,7 @@ pub async fn process_avatars(
         .collect::<Vec<_>>();
 
     while let Ok(path) = rx.recv() {
-        for avatar_id in parse_avatar_ids(&path) {
+        for avatar_id in parse_avatar_ids(&path, settings.clear_amplitude) {
             #[cfg(feature = "cache")] // Avatar already in cache
             if !cache.check_avatar_id(&avatar_id).await? {
                 continue;
@@ -215,7 +229,7 @@ pub fn parse_path_env(path: &str) -> Result<PathBuf, Error> {
 }
 
 #[must_use]
-pub fn parse_avatar_ids(path: &PathBuf) -> Vec<String> {
+pub fn parse_avatar_ids(path: &PathBuf, clear_amplitude: bool) -> Vec<String> {
     static RE: Lazy<Regex> = lazy_regex!(r"avtr_\w{8}-\w{4}-\w{4}-\w{4}-\w{12}");
 
     let Ok(file) = File::open(path) else {
@@ -232,6 +246,17 @@ pub fn parse_avatar_ids(path: &PathBuf) -> Vec<String> {
             avatar_ids.push(mat.as_str().to_string());
         }
         buf.clear();
+    }
+
+    // Close the file handle before attempting to delete
+    drop(reader);
+
+    // Clear amplitude file after reading if enabled and it's an amplitude file
+    if clear_amplitude && path.file_name().and_then(|n| n.to_str()) == Some("amplitude.cache") {
+        match std::fs::write(path, "") {
+            Ok(()) => debug!("Cleared amplitude file: {path:?}"),
+            Err(error) => warn!("Failed to clear amplitude file: {error}"),
+        }
     }
 
     avatar_ids

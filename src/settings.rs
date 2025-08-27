@@ -3,6 +3,7 @@ use derive_config::DeriveTomlConfig;
 use inquire::{
     list_option::ListOption,
     validator::{ErrorMessage, Validation},
+    Confirm,
     MultiSelect,
     Select,
 };
@@ -36,8 +37,10 @@ impl Attribution {
 
 #[derive(DeriveTomlConfig, Deserialize, Serialize)]
 pub struct Settings {
-    pub attribution: Attribution,
-    pub providers:   Vec<ProviderKind>,
+    #[serde(default)]
+    pub clear_amplitude: bool,
+    pub attribution:     Attribution,
+    pub providers:       Vec<ProviderKind>,
 }
 
 impl Settings {
@@ -76,7 +79,14 @@ impl Settings {
             })
             .prompt()?;
 
+        let clear_amplitude = Confirm::new(
+            "Clear amplitude file after reading? (Helps with privacy by removing tracked data)",
+        )
+        .with_default(true)
+        .prompt()?;
+
         Ok(Self {
+            clear_amplitude,
             attribution,
             providers,
         })
