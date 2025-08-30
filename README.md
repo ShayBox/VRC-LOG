@@ -19,15 +19,6 @@ If you don't want your avatars searchable you can request the providers below to
 
 I **DO NOT** work with search providers that don't allow blacklisting, such as YAAS (part of the SAARs ripper project)
 
-## Cache Encryption
-
-VRChat recently added local avatar cache encryption, which broke the logger, and rippers :)  
-I've updated the logger to use the Amplitude Analytics file, which only contains data when switching worlds.  
-You should take a look at this file for the short time it contains data before uploading, it contains **A LOT
-** of data...
-
-**You can also add `--enable-sdk-log-levels` to your launch options to get more avatars more quickly.**
-
 ### VRCX Auto-Launch
 
 This program prints [VRCX] avatar links when a new (to you) avatars get discovered.  
