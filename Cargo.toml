@@ -1,6 +1,6 @@
 [package]
 name = "vrc-log"
-version = "0.13.6"
+version = "0.14.0"
 authors = ["Shayne Hartford <shaybox@shaybox.com>"]
 edition = "2021"
 description = "VRChat Local Avatar ID Logger"
@@ -37,7 +37,14 @@ time = { version = "0.3", features = ["macros"] }
 tokio = { version = "1", features = ["full"] }
 tokio-rusqlite-new = { version = "0.11", features = ["bundled"], optional = true }
 tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter", "time"] }
+tracing-subscriber = { version = "=0.3.19", features = ["env-filter", "time"] }
+
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.61", features = [
+    "Win32_Foundation",
+    "Win32_Security",
+    "Win32_System_Threading",
+] }
 
 [features]
 default = ["cache", "avtrdb", "vrcdb", "vrcds", "vrcwb", "paw", "title", "rustls-tls"]

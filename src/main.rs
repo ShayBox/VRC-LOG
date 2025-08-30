@@ -64,6 +64,14 @@ async fn main() -> Result<()> {
         vrc_log::watch(tx.clone(), VRCHAT_LOW_PATH.as_path(), 1_000)?,
     ]);
 
+    #[cfg(windows)]
+    if vrc_log::windows::is_elevated()? {
+        vrc_log::windows::spawn_procmon_watcher();
+        info!("Running with elevated privileges.");
+        info!("Starting Process Monitor for additional logging.");
+        info!("Close Process Monitor manually to begin scans; it will reopen automatically.");
+    }
+
     settings.save()?;
     vrc_log::launch_game(args)?;
     vrc_log::process_avatars(settings, (tx, rx)).await

@@ -51,10 +51,15 @@ You should review this file's contents, as it includes significant amounts of pe
 You can enable automatic clearing of the Amplitude file through the setup wizard,  
 or by manually configuring the `clear_amplitude` option in the config file.
 
+### Process Monitor (Windows)
+
+It will install it if it's not installed using winget.  
+If you launch the logger with admin it will launch Process Monitor pre-configured.  
+You must manually close it to scan the collected avatars, it will re-open automatically again.
+
 ### Supported Avatar Database Providers
 
 - [avtrDB - Avatar Search] - [Discord](https://discord.gg/ZxB6w2hGfU) / [VRCX](https://api.avtrdb.com/v1/avatar/search/vrcx) / [Web](https://avtrdb.com)
-- [VRCDB - Avatar Search] - [Discord](https://discord.gg/q427ecnUvj) / [VRCX](https://vrcx.vrcdb.com/avatars/Avatar/VRCX) / [Web](https://vrcdb.com) / [World](https://vrchat.com/home/world/wrld_1146f625-5d42-40f5-bfe7-06a7664e2796)
 - [VRCDS - Project Dark Star] - [VRCX](https://avtr.nekosunevr.co.uk/vrcx_search) / [Web](https://avtr.nekosunevr.co.uk)
 - [VRCWB - World Balancer] - [Discord](https://discord.gg/Uw7aAShdsp) / [VRCX](https://avatar.worldbalancer.com/vrcx_search.php) / [Web](https://avatar.worldbalancer.com/search.php)
 - [PAW - Puppy's Avatar World] - [Discord](https://discord.gg/zHhs4nQYxX) / [VRCX](https://paw-api.amelia.fun/vrcx_search) / [Web](https://paw.amelia.fun)
@@ -62,6 +67,7 @@ or by manually configuring the `clear_amplitude` option in the config file.
 #### Unsupported Avatar Database Providers
 
 - ~~VRCDB - Ravenwood~~ - Shutdown
+- ~~[VRCDB - Avatar Search]~~ - Offline
 - ~~[Just H Party]~~ - Can't submit avatars
 - ~~[Prismic's Avatar Search]~~ - Can't submit avatars
 

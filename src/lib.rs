@@ -31,6 +31,8 @@ pub mod discord;
 pub mod provider;
 pub mod settings;
 pub mod vrchat;
+#[cfg(windows)]
+pub mod windows;
 
 pub const CARGO_PKG_VERSION: &str = env!("CARGO_PKG_VERSION");
 pub const CARGO_PKG_HOMEPAGE: &str = env!("CARGO_PKG_HOMEPAGE");
@@ -74,7 +76,7 @@ pub fn watch<P: AsRef<Path>>(
             if let Ok(event) = watch_event {
                 for path in event.paths {
                     if let Some(extension) = path.extension().and_then(OsStr::to_str) {
-                        if ["log", "txt"].contains(&extension) {
+                        if ["csv", "log", "txt"].contains(&extension) {
                             let _ = tx.send(path.clone());
                         }
                     }
@@ -92,7 +94,7 @@ pub fn watch<P: AsRef<Path>>(
         move |scan_event: notify::Result<PathBuf>| {
             if let Ok(path) = scan_event {
                 if let Some(extension) = path.extension().and_then(OsStr::to_str) {
-                    if ["log", "txt"].contains(&extension) {
+                    if ["csv", "log", "txt"].contains(&extension) {
                         let _ = tx_clone.send(path.clone());
                     }
                 }
