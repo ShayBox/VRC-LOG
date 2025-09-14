@@ -13,12 +13,12 @@ use crate::{
 
 const URL: &str = "https://avtr.nekosunevr.co.uk/v1/vrchat/avatars/store/putavatarExternal";
 
-pub struct VrcDS<'a> {
+pub struct NSVR<'a> {
     settings: &'a Settings,
     client:   Client,
 }
 
-impl<'a> VrcDS<'a> {
+impl<'a> NSVR<'a> {
     #[must_use]
     pub fn new(settings: &'a Settings) -> Self {
         Self {
@@ -29,9 +29,9 @@ impl<'a> VrcDS<'a> {
 }
 
 #[async_trait]
-impl Provider for VrcDS<'_> {
+impl Provider for NSVR<'_> {
     fn kind(&self) -> ProviderKind {
-        ProviderKind::VRCDS
+        ProviderKind::NSVR
     }
 
     async fn check_avatar_id(&self, _avatar_id: &str) -> Result<bool> {
@@ -72,6 +72,11 @@ impl Provider for VrcDS<'_> {
         let unique = match status {
             StatusCode::OK => false,
             StatusCode::NOT_FOUND => true,
+            StatusCode::TOO_MANY_REQUESTS => {
+                warn!("[{kind}] 429 Rate Limit, Please Wait 1 Minute...");
+                tokio::time::sleep(Duration::from_secs(60)).await;
+                Box::pin(self.send_avatar_id(avatar_id)).await?
+            }
             _ => bail!("[{kind}] {status} | {text}"),
         };
 

@@ -7,12 +7,12 @@ use strum::{Display, EnumIter};
 pub mod avtrdb;
 #[cfg(feature = "cache")]
 pub mod cache;
+#[cfg(feature = "nsvr")]
+pub mod nsvr;
 #[cfg(feature = "paw")]
 pub mod paw;
 #[cfg(feature = "vrcdb")]
 pub mod vrcdb;
-#[cfg(feature = "vrcds")]
-pub mod vrcds;
 #[cfg(feature = "vrcwb")]
 pub mod vrcwb;
 
@@ -25,15 +25,15 @@ pub enum ProviderKind {
     #[cfg(feature = "avtrdb")]
     #[strum(to_string = "avtrDB - Avatar Search")]
     AVTRDB,
+    #[cfg(feature = "nsvr")]
+    #[strum(to_string = "NSVR - NekoSune Community")]
+    NSVR,
     #[cfg(feature = "paw")]
     #[strum(to_string = "PAW - Puppy's Avatar World")]
     PAW,
     #[cfg(feature = "vrcdb")]
     #[strum(to_string = "VRCDB - Avatar Search")]
     VRCDB,
-    #[cfg(feature = "vrcds")]
-    #[strum(to_string = "VRCDS - Project Dark Star")]
-    VRCDS,
     #[cfg(feature = "vrcwb")]
     #[strum(to_string = "VRCWB - World Balancer")]
     VRCWB,

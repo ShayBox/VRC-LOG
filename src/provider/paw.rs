@@ -16,6 +16,7 @@ const URL: &str = "https://paw-api.amelia.fun/update";
 const AVATAR_URL: &str = "https://paw-api.amelia.fun/avatar";
 
 pub struct Paw<'a> {
+    #[allow(dead_code)]
     settings: &'a Settings,
     client:   Client,
 }

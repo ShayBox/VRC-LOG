@@ -152,12 +152,12 @@ pub async fn process_avatars(
             ProviderKind::CACHE => None,
             #[cfg(feature = "avtrdb")]
             ProviderKind::AVTRDB => provider!(AvtrDB::new(&settings)),
+            #[cfg(feature = "nsvr")]
+            ProviderKind::NSVR => provider!(NSVR::new(&settings)),
             #[cfg(feature = "paw")]
             ProviderKind::PAW => provider!(Paw::new(&settings)),
             #[cfg(feature = "vrcdb")]
             ProviderKind::VRCDB => provider!(VrcDB::new(&settings)),
-            #[cfg(feature = "vrcds")]
-            ProviderKind::VRCDS => provider!(VrcDS::new(&settings)),
             #[cfg(feature = "vrcwb")]
             ProviderKind::VRCWB => provider!(VrcWB::new(&settings)),
         })
