@@ -18,6 +18,7 @@ use vrc_log::{
     vrchat::{VRCHAT_AMP_PATH, VRCHAT_LOW_PATH},
     CARGO_PKG_HOMEPAGE,
 };
+
 /* Watchers will stop working if they get dropped. */
 static WATCHERS: OnceLock<Vec<PollWatcher>> = OnceLock::new();
 
@@ -54,6 +55,7 @@ async fn main() -> Result<()> {
         }
         error => {
             error!("There was an error loading the settings: {error}");
+            error!("Most likely an update. Please follow the setup wizard");
             Settings::try_wizard().expect("Failed to setup wizard")
         }
     });

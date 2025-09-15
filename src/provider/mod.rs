@@ -27,6 +27,7 @@ pub enum ProviderKind {
     AVTRDB,
     #[cfg(feature = "nsvr")]
     #[strum(to_string = "NSVR - NekoSune Community")]
+    #[serde(alias = "VRCDS")]
     NSVR,
     #[cfg(feature = "paw")]
     #[strum(to_string = "PAW - Puppy's Avatar World")]
