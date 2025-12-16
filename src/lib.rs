@@ -21,11 +21,8 @@ use notify::{Config, Event, PollWatcher, RecursiveMode, Watcher};
 use parking_lot::RwLock;
 use terminal_link::Link;
 
-use crate::{
-    provider::{prelude::*, Provider, ProviderKind},
-    settings::Settings,
-};
-
+#[cfg(feature = "cache")]
+pub mod cache;
 #[cfg(feature = "discord")]
 pub mod discord;
 pub mod provider;
