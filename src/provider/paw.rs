@@ -1,29 +1,28 @@
-use std::time::Duration;
+use std::{sync::Arc, time::Duration};
 
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use async_trait::async_trait;
 use reqwest::{Client, StatusCode};
 use serde::Deserialize;
 use serde_json::Value;
 
 use crate::{
+    USER_AGENT,
     provider::{Provider, ProviderKind},
     settings::Settings,
-    USER_AGENT,
 };
 
 const URL: &str = "https://paw-api.amelia.fun/update";
-const AVATAR_URL: &str = "https://paw-api.amelia.fun/avatar";
 
-pub struct Paw<'a> {
+pub struct Paw {
     #[allow(dead_code)]
-    settings: &'a Settings,
-    client:   Client,
+    settings: Arc<Settings>,
+    client: Client,
 }
 
-impl<'a> Paw<'a> {
+impl Paw {
     #[must_use]
-    pub fn new(settings: &'a Settings) -> Self {
+    pub fn new(settings: Arc<Settings>) -> Self {
         Self {
             settings,
             client: Client::default(),
@@ -33,14 +32,14 @@ impl<'a> Paw<'a> {
 
 #[derive(Debug, Deserialize)]
 struct PawResponse {
-    success: bool,
-    code:    u16,
-    result:  Option<Value>,
-    avatar:  Option<Value>,
+    _success: bool,
+    _code: u16,
+    _result: Option<Value>,
+    avatar: Option<Value>,
 }
 
 #[async_trait]
-impl Provider for Paw<'_> {
+impl Provider for Paw {
     fn kind(&self) -> ProviderKind {
         ProviderKind::PAW
     }
@@ -63,7 +62,7 @@ impl Provider for Paw<'_> {
         let unique = match status {
             StatusCode::OK => {
                 let data = serde_json::from_str::<PawResponse>(&text)?;
-
+                #[allow(clippy::nonminimal_bool)]
                 !matches!(data.avatar.as_ref(), Some(avatar) if !avatar.is_null() && !(avatar.is_array() && avatar.as_array().unwrap().is_empty()))
             }
             StatusCode::TOO_MANY_REQUESTS => {

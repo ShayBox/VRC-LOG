@@ -1,26 +1,26 @@
-use std::time::Duration;
+use std::{sync::Arc, time::Duration};
 
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use async_trait::async_trait;
 use reqwest::{Client, StatusCode};
 use serde_json::json;
 
 use crate::{
+    USER_AGENT,
     provider::{Provider, ProviderKind},
     settings::Settings,
-    USER_AGENT,
 };
 
 const URL: &str = "https://avatar.worldbalancer.com/v1/vrchat/avatars/store/putavatarExternal";
 
-pub struct VrcWB<'a> {
-    settings: &'a Settings,
-    client:   Client,
+pub struct VrcWB {
+    settings: Arc<Settings>,
+    client: Client,
 }
 
-impl<'a> VrcWB<'a> {
+impl VrcWB {
     #[must_use]
-    pub fn new(settings: &'a Settings) -> Self {
+    pub fn new(settings: Arc<Settings>) -> Self {
         Self {
             settings,
             client: Client::default(),
@@ -29,7 +29,7 @@ impl<'a> VrcWB<'a> {
 }
 
 #[async_trait]
-impl Provider for VrcWB<'_> {
+impl Provider for VrcWB {
     fn kind(&self) -> ProviderKind {
         ProviderKind::VRCWB
     }
