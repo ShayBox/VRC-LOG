@@ -49,14 +49,12 @@ pub trait Provider: Send + Sync {
     /// # Errors
     /// Will return `Err` if anything errors
     async fn send_avatar_id(&self, avatar_id: &str) -> Result<bool>;
-
-    // TODO: Add send_avatar_ids for batching support, with fallback iteration to send_avatar_id.
 }
 
 // https://stackoverflow.com/a/72239266
 #[macro_export]
 macro_rules! provider {
     ($x:expr) => {
-        Some(Box::new($x) as Box<dyn $crate::provider::Provider>)
+        std::sync::Arc::new(Box::new($x) as Box<dyn $crate::provider::Provider>)
     };
 }

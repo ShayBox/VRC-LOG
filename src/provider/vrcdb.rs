@@ -1,26 +1,26 @@
-use std::time::Duration;
+use std::{sync::Arc, time::Duration};
 
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use async_trait::async_trait;
 use reqwest::{Client, StatusCode};
 use serde_json::json;
 
 use crate::{
+    USER_AGENT,
     provider::{Provider, ProviderKind},
     settings::Settings,
-    USER_AGENT,
 };
 
 const URL: &str = "https://search.bs002.de/api/Avatar/putavatar";
 
-pub struct VrcDB<'a> {
-    settings: &'a Settings,
-    client:   Client,
+pub struct VrcDB {
+    settings: Arc<Settings>,
+    client: Client,
 }
 
-impl<'a> VrcDB<'a> {
+impl VrcDB {
     #[must_use]
-    pub fn new(settings: &'a Settings) -> Self {
+    pub fn new(settings: Arc<Settings>) -> Self {
         Self {
             settings,
             client: Client::default(),
@@ -29,7 +29,7 @@ impl<'a> VrcDB<'a> {
 }
 
 #[async_trait]
-impl Provider for VrcDB<'_> {
+impl Provider for VrcDB {
     fn kind(&self) -> ProviderKind {
         ProviderKind::VRCDB
     }
