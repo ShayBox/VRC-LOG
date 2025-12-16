@@ -45,30 +45,6 @@ impl Provider for Paw<'_> {
         ProviderKind::PAW
     }
 
-    async fn check_avatar_id(&self, _avatar_id: &str) -> Result<bool> {
-        let kind = self.kind();
-        let response = self
-            .client
-            .get(AVATAR_URL)
-            .header("User-Agent", USER_AGENT)
-            .query(&[("avatarId", _avatar_id)])
-            .timeout(Duration::from_secs(3))
-            .send()
-            .await?;
-
-        let status = response.status();
-        let text = response.text().await?;
-        debug!("[{kind}] {status} | {text}");
-
-        if status != StatusCode::OK {
-            bail!("[{kind}] Failed to check avatar: {status} | {text}");
-        }
-
-        let data = serde_json::from_str::<PawResponse>(&text)?;
-
-        Ok(data.success && data.code == 200 && data.result.is_some())
-    }
-
     async fn send_avatar_id(&self, avatar_id: &str) -> Result<bool> {
         let kind = self.kind();
         let response = self

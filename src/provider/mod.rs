@@ -42,14 +42,8 @@ pub trait Provider: Send + Sync {
     /// # Return the `ProviderKind`
     fn kind(&self) -> ProviderKind;
 
-    /// # Check if the avatar ID is unique or not.
-    /// True: New/Unique | False: Duplicate/Existing.
-    ///
-    /// # Errors
-    /// Will return `Err` if anything errors
-    async fn check_avatar_id(&self, avatar_id: &str) -> Result<bool>;
-
     /// # Send avatar ID to the provider
+    ///
     /// True: New/Unique | False: Duplicate/Existing.
     ///
     /// # Errors
