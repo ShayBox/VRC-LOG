@@ -1,7 +1,5 @@
 #[cfg(feature = "avtrdb")]
 pub use super::avtrdb::AvtrDB;
-#[cfg(feature = "cache")]
-pub use super::cache::Cache;
 #[cfg(feature = "nsvr")]
 pub use super::nsvr::NSVR;
 #[cfg(feature = "paw")]

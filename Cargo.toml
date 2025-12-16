@@ -25,17 +25,23 @@ derive-config = { version = "2", features = ["dirs", "toml"] }
 discord-presence = { version = "2", optional = true }
 futures = "0.3"
 inquire = "0.8"
+itertools = "0.14.0"
 lazy-regex = "3"
 notify = "8"
 parking_lot = "0.12"
-reqwest = { version = "0.12", default-features = false, features = ["json"], optional = true }
+reqwest = { version = "0.12", default-features = false, features = [
+    "json",
+], optional = true }
+rusqlite = "0.37.0"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 strum = { version = "0.27", features = ["derive"] }
 terminal-link = "0.1"
 time = { version = "0.3", features = ["macros"] }
 tokio = { version = "1", features = ["full"] }
-tokio-rusqlite-new = { version = "0.11", features = ["bundled"], optional = true }
+tokio-rusqlite-new = { version = "0.11", features = [
+    "bundled",
+], optional = true }
 tracing = "0.1"
 tracing-subscriber = { version = "=0.3.19", features = ["env-filter", "time"] }
 
@@ -47,7 +53,16 @@ windows = { version = "0.62", features = [
 ] }
 
 [features]
-default = ["cache", "avtrdb", "nsvr", "paw", "vrcdb", "vrcwb", "title", "rustls-tls"]
+default = [
+    "cache",
+    "avtrdb",
+    "nsvr",
+    "paw",
+    "vrcdb",
+    "vrcwb",
+    "title",
+    "rustls-tls",
+]
 
 # VRChat Avatar Database Providers
 cache = ["dep:tokio-rusqlite-new"]
@@ -63,6 +78,15 @@ title = ["dep:crossterm"]
 native-tls = ["reqwest/native-tls"]
 rustls-tls = ["reqwest/rustls-tls"]
 
+[[bench]]
+name = "cache_bench"
+harness = false
+
+[[bench]]
+name = "cache_disk_bench"
+harness = false
+
+
 # https://github.com/johnthagen/min-sized-rust
 [profile.release]
 strip = true      # Automatically strip symbols from the binary.
@@ -77,3 +101,9 @@ nursery = { level = "warn", priority = -1 }
 cargo = { level = "warn", priority = -1 }
 multiple_crate_versions = "allow"
 similar_names = "allow"
+
+[dev-dependencies]
+criterion = "0.8.1"
+tempfile = "3.23.0"
+tokio = { version = "1", features = ["full"] }
+uuid = { version = "1.19.0", features = ["v4"] }
