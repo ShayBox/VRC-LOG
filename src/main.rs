@@ -1,7 +1,10 @@
 #[macro_use]
 extern crate tracing;
 
-use std::{io::ErrorKind, sync::OnceLock};
+use std::{
+    io::ErrorKind,
+    sync::{Arc, OnceLock},
+};
 
 use anyhow::Result;
 use chrono::{Local, Offset};
@@ -10,13 +13,14 @@ use crossterm::{execute, terminal::SetTitle};
 use derive_config::{ConfigError, DeriveTomlConfig};
 use notify::PollWatcher;
 use terminal_link::Link;
-use time::{macros::format_description, UtcOffset};
+use time::{UtcOffset, macros::format_description};
 use tracing::level_filters::LevelFilter;
-use tracing_subscriber::{fmt::time::OffsetTime, EnvFilter};
+use tracing_subscriber::{EnvFilter, fmt::time::OffsetTime};
 use vrc_log::{
+    CARGO_PKG_HOMEPAGE, provider,
+    provider::{ProviderKind, prelude::*},
     settings::Settings,
     vrchat::{VRCHAT_AMP_PATH, VRCHAT_LOW_PATH},
-    CARGO_PKG_HOMEPAGE,
 };
 
 /* Watchers will stop working if they get dropped. */
@@ -76,5 +80,25 @@ async fn main() -> Result<()> {
 
     settings.save()?;
     vrc_log::launch_game(args)?;
-    vrc_log::process_avatars(settings, (tx, rx)).await
+
+    let settings = Arc::new(settings);
+
+    let providers = settings
+        .providers
+        .iter()
+        .map(|provider| match provider {
+            #[cfg(feature = "avtrdb")]
+            ProviderKind::AVTRDB => provider!(AvtrDB::new(settings.clone())),
+            #[cfg(feature = "nsvr")]
+            ProviderKind::NSVR => provider!(NSVR::new(settings.clone())),
+            #[cfg(feature = "paw")]
+            ProviderKind::PAW => provider!(Paw::new(settings.clone())),
+            #[cfg(feature = "vrcdb")]
+            ProviderKind::VRCDB => provider!(VrcDB::new(settings.clone())),
+            #[cfg(feature = "vrcwb")]
+            ProviderKind::VRCWB => provider!(VrcWB::new(settings.clone())),
+        })
+        .collect::<Vec<_>>();
+
+    vrc_log::process_avatars(providers, settings.clear_amplitude, (tx, rx)).await
 }
