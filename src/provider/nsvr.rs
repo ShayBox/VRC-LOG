@@ -34,10 +34,6 @@ impl Provider for NSVR<'_> {
         ProviderKind::NSVR
     }
 
-    async fn check_avatar_id(&self, _avatar_id: &str) -> Result<bool> {
-        bail!("Unsupported/Unused")
-    }
-
     async fn send_avatar_id(&self, avatar_id: &str) -> Result<bool> {
         let kind = self.kind();
         let json = json!({
