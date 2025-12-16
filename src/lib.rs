@@ -2,29 +2,37 @@
 extern crate tracing;
 
 use std::{
+    collections::HashSet,
     env::Args,
     ffi::OsStr,
-    fs::{create_dir_all, File},
+    fs::{File, create_dir_all},
     io::{BufRead, BufReader, Error},
     path::{Path, PathBuf},
     process::{Command, Stdio},
-    sync::LazyLock,
+    sync::{Arc, LazyLock},
     time::Duration,
 };
 
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use chrono::Local;
 use colored::{Color, Colorize};
 use crossbeam::channel::{Receiver, Sender};
-use lazy_regex::{lazy_regex, regex_replace_all, Lazy, Regex};
+use lazy_regex::{Lazy, Regex, lazy_regex, regex_replace_all};
 use notify::{Config, Event, PollWatcher, RecursiveMode, Watcher};
 use parking_lot::RwLock;
 use terminal_link::Link;
 
 #[cfg(feature = "cache")]
+use crate::process::process_with_cache;
+#[cfg(not(feature = "cache"))]
+use crate::process::process_without_cache;
+use crate::provider::Provider;
+
+#[cfg(feature = "cache")]
 pub mod cache;
 #[cfg(feature = "discord")]
 pub mod discord;
+mod process;
 pub mod provider;
 pub mod settings;
 pub mod vrchat;
@@ -48,10 +56,10 @@ pub fn get_local_time() -> String {
 /// Will return `Err` if it couldn't get the GitHub repository.
 pub async fn check_for_updates() -> reqwest::Result<bool> {
     let response = reqwest::get(CARGO_PKG_HOMEPAGE).await?;
-    if let Some(mut segments) = response.url().path_segments() {
-        if let Some(remote_version) = segments.next_back() {
-            return Ok(remote_version > CARGO_PKG_VERSION);
-        }
+    if let Some(mut segments) = response.url().path_segments()
+        && let Some(remote_version) = segments.next_back()
+    {
+        return Ok(remote_version > CARGO_PKG_VERSION);
     }
 
     Ok(false)
@@ -72,15 +80,15 @@ pub fn watch<P: AsRef<Path>>(
         move |watch_event: notify::Result<Event>| {
             if let Ok(event) = watch_event {
                 for path in event.paths {
-                    if let Some(extension) = path.extension().and_then(OsStr::to_str) {
-                        if ["csv", "log", "txt"].contains(&extension) {
-                            let _ = tx.send(path.clone());
-                        }
+                    if let Some(extension) = path.extension().and_then(OsStr::to_str)
+                        && ["csv", "log", "txt"].contains(&extension)
+                    {
+                        let _ = tx.send(path.clone());
                     }
-                    if let Some(filename) = path.file_name().and_then(OsStr::to_str) {
-                        if filename == "amplitude.cache" {
-                            let _ = tx.send(path);
-                        }
+                    if let Some(filename) = path.file_name().and_then(OsStr::to_str)
+                        && filename == "amplitude.cache"
+                    {
+                        let _ = tx.send(path);
                     }
                 }
             }
@@ -90,15 +98,15 @@ pub fn watch<P: AsRef<Path>>(
             .with_poll_interval(Duration::from_millis(millis)),
         move |scan_event: notify::Result<PathBuf>| {
             if let Ok(path) = scan_event {
-                if let Some(extension) = path.extension().and_then(OsStr::to_str) {
-                    if ["csv", "log", "txt"].contains(&extension) {
-                        let _ = tx_clone.send(path.clone());
-                    }
+                if let Some(extension) = path.extension().and_then(OsStr::to_str)
+                    && ["csv", "log", "txt"].contains(&extension)
+                {
+                    let _ = tx_clone.send(path.clone());
                 }
-                if let Some(filename) = path.file_name().and_then(OsStr::to_str) {
-                    if filename == "amplitude.cache" {
-                        let _ = tx_clone.send(path);
-                    }
+                if let Some(filename) = path.file_name().and_then(OsStr::to_str)
+                    && filename == "amplitude.cache"
+                {
+                    let _ = tx_clone.send(path);
                 }
             }
         },
@@ -136,71 +144,28 @@ pub fn launch_game(args: Args) -> Result<()> {
 /// # Errors
 /// Will return `Err` if `Sqlite::new` or `Provider::send_avatar_id` errors
 pub async fn process_avatars(
-    settings: Settings,
+    providers: Vec<Arc<Box<dyn Provider>>>,
+    clear_amplitude: bool,
     (_tx, rx): (Sender<PathBuf>, Receiver<PathBuf>),
 ) -> Result<()> {
     #[cfg(feature = "cache")]
-    let cache = Cache::new().await?;
-    let providers = settings
-        .providers
-        .iter()
-        .filter_map(|provider| match provider {
-            #[cfg(feature = "cache")]
-            ProviderKind::CACHE => None,
-            #[cfg(feature = "avtrdb")]
-            ProviderKind::AVTRDB => provider!(AvtrDB::new(&settings)),
-            #[cfg(feature = "nsvr")]
-            ProviderKind::NSVR => provider!(NSVR::new(&settings)),
-            #[cfg(feature = "paw")]
-            ProviderKind::PAW => provider!(Paw::new(&settings)),
-            #[cfg(feature = "vrcdb")]
-            ProviderKind::VRCDB => provider!(VrcDB::new(&settings)),
-            #[cfg(feature = "vrcwb")]
-            ProviderKind::VRCWB => provider!(VrcWB::new(&settings)),
-        })
-        .collect::<Vec<_>>();
+    let cache = cache::Cache::new().await?;
 
     while let Ok(path) = rx.recv() {
-        for avatar_id in parse_avatar_ids(&path, settings.clear_amplitude) {
-            #[cfg(feature = "cache")] // Avatar already in cache
-            if !cache.check_avatar_id(&avatar_id).await? {
-                continue;
-            }
+        let avatar_ids = parse_avatar_ids(&path);
 
-            #[cfg(feature = "cache")] // Don't send to cache if sending failed
-            let mut send_to_cache = true;
-
-            print_colorized(&avatar_id);
-
-            // Collect all provider futures for this avatar_id
-            let futures = providers
-                .iter()
-                .map(|provider| provider.send_avatar_id(&avatar_id));
-            let results = futures::future::join_all(futures).await;
-
-            for (provider, result) in providers.iter().zip(results) {
-                let kind = provider.kind();
-                match result {
-                    Ok(unique) => {
-                        if unique {
-                            info!("^ Successfully Submitted to {kind}");
-                        }
-                    }
-                    Err(error) => {
-                        #[cfg(feature = "cache")]
-                        {
-                            send_to_cache = false;
-                        }
-                        error!("^ Failed to submit to {kind}: {error}");
-                    }
-                }
-            }
-
-            #[cfg(feature = "cache")]
-            if send_to_cache {
-                cache.send_avatar_id(&avatar_id).await?;
+        // Clear amplitude file after reading if enabled and it's an amplitude file
+        if clear_amplitude && path.file_name().and_then(|n| n.to_str()) == Some("amplitude.cache") {
+            match std::fs::write(&path, "") {
+                Ok(()) => debug!("Cleared amplitude file: {path:?}"),
+                Err(error) => warn!("Failed to clear amplitude file: {error}"),
             }
         }
+
+        #[cfg(feature = "cache")]
+        process_with_cache(providers.clone(), &cache, avatar_ids).await?;
+        #[cfg(not(feature = "cache"))]
+        process_without_cache(providers.clone(), avatar_ids).await?;
     }
 
     bail!("Channel Closed")
@@ -228,34 +193,24 @@ pub fn parse_path_env(path: &str) -> Result<PathBuf, Error> {
 }
 
 #[must_use]
-pub fn parse_avatar_ids(path: &PathBuf, clear_amplitude: bool) -> Vec<String> {
+pub fn parse_avatar_ids(path: &PathBuf) -> impl IntoIterator<Item = String> {
+    #[allow(clippy::non_std_lazy_statics)]
     static RE: Lazy<Regex> = lazy_regex!(r"avtr_\w{8}-\w{4}-\w{4}-\w{4}-\w{12}");
 
     let Ok(file) = File::open(path) else {
-        return Vec::new(); // Directory
+        return HashSet::new(); // Directory
     };
 
     let mut reader = BufReader::new(file);
-    let mut avatar_ids = Vec::new();
+    let mut avatar_ids = HashSet::new(); // Filter out duplicates
     let mut buf = Vec::new();
 
     while reader.read_until(b'\n', &mut buf).unwrap_or(0) > 0 {
         let line = String::from_utf8_lossy(&buf);
         for mat in RE.find_iter(&line) {
-            avatar_ids.push(mat.as_str().to_string());
+            avatar_ids.insert(mat.as_str().to_string());
         }
         buf.clear();
-    }
-
-    // Close the file handle before attempting to delete
-    drop(reader);
-
-    // Clear amplitude file after reading if enabled and it's an amplitude file
-    if clear_amplitude && path.file_name().and_then(|n| n.to_str()) == Some("amplitude.cache") {
-        match std::fs::write(path, "") {
-            Ok(()) => debug!("Cleared amplitude file: {path:?}"),
-            Err(error) => warn!("Failed to clear amplitude file: {error}"),
-        }
     }
 
     avatar_ids
