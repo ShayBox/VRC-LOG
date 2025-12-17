@@ -69,4 +69,8 @@ impl Provider for VrcWB {
 
         Ok(unique)
     }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
 }

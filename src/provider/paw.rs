@@ -75,4 +75,8 @@ impl Provider for Paw {
 
         Ok(unique)
     }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
 }
