@@ -13,18 +13,24 @@ use crate::{discord, discord::DEVELOPER_ID, provider::ProviderKind};
 #[derive(Display, Deserialize, Serialize)]
 pub enum Attribution {
     #[strum(to_string = "Anonymously (VRC-LOG Dev)")]
-    Anonymous(String),
+    Anonymous,
     #[strum(to_string = "Discord RPC ({0})")]
     DiscordRPC(String),
     #[strum(to_string = "Discord ID (Manual Input)")]
     DiscordID(String),
 }
 
+impl Default for Attribution {
+    fn default() -> Self {
+        Self::Anonymous
+    }
+}
+
 impl Attribution {
     #[must_use]
     pub fn get_user_id(&self) -> String {
         match self {
-            Self::Anonymous(_) => DEVELOPER_ID.to_string(),
+            Self::Anonymous => DEVELOPER_ID.to_string(),
             Self::DiscordID(id) => id.clone(),
             Self::DiscordRPC(id) => discord::get_user()
                 .and_then(|u| u.id)
@@ -33,7 +39,7 @@ impl Attribution {
     }
 }
 
-#[derive(DeriveTomlConfig, Deserialize, Serialize)]
+#[derive(DeriveTomlConfig, Deserialize, Serialize, Default)]
 pub struct Settings {
     #[serde(default)]
     pub clear_amplitude: bool,
@@ -53,7 +59,7 @@ impl Settings {
     /// Will panic if Discord user ID doesn't exist.
     pub fn try_wizard() -> Result<Self> {
         let mut attributions = vec![
-            Attribution::Anonymous(DEVELOPER_ID.to_string()),
+            Attribution::Anonymous,
             Attribution::DiscordID(String::new()),
         ];
         if let Some(user) = discord::get_user() {

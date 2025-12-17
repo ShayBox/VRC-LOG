@@ -16,7 +16,7 @@ pub mod vrcwb;
 
 pub mod prelude;
 
-#[derive(EnumIter, Display, Deserialize, Serialize, Clone, Copy)]
+#[derive(EnumIter, Display, Deserialize, Serialize, Clone, Copy, PartialEq, PartialOrd)]
 #[repr(u32)]
 pub enum ProviderKind {
     #[cfg(feature = "avtrdb")]
@@ -49,6 +49,8 @@ pub trait Provider: Send + Sync {
     /// # Errors
     /// Will return `Err` if anything errors
     async fn send_avatar_id(&self, avatar_id: &str) -> Result<bool>;
+
+    fn as_any(&self) -> &dyn std::any::Any;
 }
 
 // https://stackoverflow.com/a/72239266

@@ -74,4 +74,8 @@ impl Provider for VrcDB {
 
         Ok(unique)
     }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
 }

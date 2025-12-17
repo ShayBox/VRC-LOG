@@ -78,4 +78,8 @@ impl Provider for NSVR {
 
         Ok(unique)
     }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
 }

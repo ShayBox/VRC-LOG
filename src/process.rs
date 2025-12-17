@@ -132,6 +132,10 @@ mod tests {
             self.sent.lock().await.push(avatar_id.to_string());
             Ok(self.succeed)
         }
+
+        fn as_any(&self) -> &dyn std::any::Any {
+            self
+        }
     }
 
     #[cfg(not(feature = "cache"))]

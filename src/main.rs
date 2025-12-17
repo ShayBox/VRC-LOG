@@ -14,6 +14,7 @@ use derive_config::{ConfigError, DeriveTomlConfig};
 use notify::PollWatcher;
 use terminal_link::Link;
 use time::{UtcOffset, macros::format_description};
+use tokio::signal;
 use tracing::level_filters::LevelFilter;
 use tracing_subscriber::{EnvFilter, fmt::time::OffsetTime};
 use vrc_log::{
@@ -100,5 +101,45 @@ async fn main() -> Result<()> {
         })
         .collect::<Vec<_>>();
 
-    vrc_log::process_avatars(providers, settings.clear_amplitude, (tx, rx)).await
+    let handle = tokio::spawn(vrc_log::process_avatars(
+        providers.clone(), // this is bad
+        settings.clear_amplitude,
+        (tx, rx),
+    ));
+
+    let ctrl_c = async {
+        signal::ctrl_c()
+            .await
+            .expect("failed to install Ctrl+C handler");
+    };
+
+    #[cfg(unix)]
+    let terminate = async {
+        signal::unix::signal(signal::unix::SignalKind::terminate())
+            .expect("failed to install signal handler")
+            .recv()
+            .await;
+    };
+
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
+
+    tokio::select! {
+        _ = ctrl_c => {
+            handle.abort();
+        },
+        _ = terminate => {
+            handle.abort();
+        },
+    }
+
+    for provider in &providers {
+        if provider.kind() == ProviderKind::AVTRDB
+            && let Some(avtr_db_provider) = provider.as_any().downcast_ref::<AvtrDB>()
+        {
+            avtr_db_provider.flush_buffer().await?;
+        }
+    }
+
+    Ok(())
 }
