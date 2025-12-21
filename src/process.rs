@@ -14,7 +14,7 @@ pub async fn process_with_cache<I: IntoIterator<Item = String>>(
 ) -> anyhow::Result<()> {
     let checked_ids = cache.check_all_ids(avatar_ids).await?;
 
-    let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel();
+    let (tx, mut rx) = flume::unbounded();
 
     for (id, provider_bits) in checked_ids {
         print_colorized(&id);
@@ -32,7 +32,9 @@ pub async fn process_with_cache<I: IntoIterator<Item = String>>(
                     Ok(success) => {
                         if success {
                             info!("^ Successfully Submitted to {kind}");
-                            let _ = tx_clone.send((id_clone, provider_bits | kind as u32));
+                            let _ = tx_clone
+                                .send_async((id_clone, provider_bits | kind as u32))
+                                .await;
                         }
                     }
                     Err(err) => {
@@ -47,7 +49,7 @@ pub async fn process_with_cache<I: IntoIterator<Item = String>>(
 
     let mut buffer = Vec::new();
 
-    while let Some(msg) = rx.recv().await {
+    while let Ok(msg) = rx.recv_async().await {
         buffer.push(msg);
     }
 
@@ -131,10 +133,6 @@ mod tests {
         async fn send_avatar_id(&self, avatar_id: &str) -> Result<bool> {
             self.sent.lock().await.push(avatar_id.to_string());
             Ok(self.succeed)
-        }
-
-        fn as_any(&self) -> &dyn std::any::Any {
-            self
         }
     }
 

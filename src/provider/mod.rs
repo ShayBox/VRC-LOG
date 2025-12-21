@@ -1,4 +1,3 @@
-use anyhow::Result;
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use strum::{Display, EnumIter};
@@ -16,7 +15,7 @@ pub mod vrcwb;
 
 pub mod prelude;
 
-#[derive(EnumIter, Display, Deserialize, Serialize, Clone, Copy, PartialEq, PartialOrd)]
+#[derive(EnumIter, Display, Deserialize, Serialize, Clone, Copy, PartialEq, Eq, PartialOrd)]
 #[repr(u32)]
 pub enum ProviderKind {
     #[cfg(feature = "avtrdb")]
@@ -38,7 +37,7 @@ pub enum ProviderKind {
 }
 
 #[async_trait]
-pub trait Provider: Send + Sync {
+pub trait Provider: Sync + Send {
     /// # Return the `ProviderKind`
     fn kind(&self) -> ProviderKind;
 
@@ -48,9 +47,7 @@ pub trait Provider: Send + Sync {
     ///
     /// # Errors
     /// Will return `Err` if anything errors
-    async fn send_avatar_id(&self, avatar_id: &str) -> Result<bool>;
-
-    fn as_any(&self) -> &dyn std::any::Any;
+    async fn send_avatar_id(&self, avatar_id: &str) -> anyhow::Result<bool>;
 }
 
 // https://stackoverflow.com/a/72239266

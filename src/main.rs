@@ -19,7 +19,7 @@ use tracing::level_filters::LevelFilter;
 use tracing_subscriber::{EnvFilter, fmt::time::OffsetTime};
 use vrc_log::{
     CARGO_PKG_HOMEPAGE, provider,
-    provider::{ProviderKind, prelude::*},
+    provider::{ProviderKind, avtrdb::AvtrDBActor, prelude::*},
     settings::Settings,
     vrchat::{VRCHAT_AMP_PATH, VRCHAT_LOW_PATH},
 };
@@ -65,7 +65,7 @@ async fn main() -> Result<()> {
         }
     });
 
-    let (tx, rx) = crossbeam::channel::unbounded();
+    let (tx, rx) = flume::unbounded();
     let _ = WATCHERS.set(vec![
         vrc_log::watch(tx.clone(), VRCHAT_AMP_PATH.as_path(), 100)?,
         vrc_log::watch(tx.clone(), VRCHAT_LOW_PATH.as_path(), 1_000)?,
@@ -84,22 +84,27 @@ async fn main() -> Result<()> {
 
     let settings = Arc::new(settings);
 
+    let (mut avtrdb_actor, avtrdb_sender) = AvtrDBActor::new(settings.clone());
+
     let providers = settings
         .providers
         .iter()
         .map(|provider| match provider {
-            #[cfg(feature = "avtrdb")]
-            ProviderKind::AVTRDB => provider!(AvtrDB::new(settings.clone())),
             #[cfg(feature = "nsvr")]
-            ProviderKind::NSVR => provider!(NSVR::new(settings.clone())),
+            ProviderKind::NSVR => provider!(NSVR::new(&settings)),
             #[cfg(feature = "paw")]
-            ProviderKind::PAW => provider!(Paw::new(settings.clone())),
+            ProviderKind::PAW => provider!(Paw::new(&settings)),
             #[cfg(feature = "vrcdb")]
-            ProviderKind::VRCDB => provider!(VrcDB::new(settings.clone())),
+            ProviderKind::VRCDB => provider!(VrcDB::new(&settings)),
             #[cfg(feature = "vrcwb")]
-            ProviderKind::VRCWB => provider!(VrcWB::new(settings.clone())),
+            ProviderKind::VRCWB => provider!(VrcWB::new(&settings)),
+            #[cfg(feature = "avtrdb")]
+            ProviderKind::AVTRDB => provider!(VrcWB::new(&settings)),
+            //  provider!(AvtrDB::new(avtrdb_sender.clone())),
         })
         .collect::<Vec<_>>();
+
+    let avtrdb_handle = tokio::spawn(async move { avtrdb_actor.run().await });
 
     let handle = tokio::spawn(vrc_log::process_avatars(
         providers.clone(), // this is bad
@@ -131,14 +136,6 @@ async fn main() -> Result<()> {
         _ = terminate => {
             handle.abort();
         },
-    }
-
-    for provider in &providers {
-        if provider.kind() == ProviderKind::AVTRDB
-            && let Some(avtr_db_provider) = provider.as_any().downcast_ref::<AvtrDB>()
-        {
-            avtr_db_provider.flush_buffer().await?;
-        }
     }
 
     Ok(())

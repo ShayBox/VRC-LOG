@@ -1,4 +1,4 @@
-use std::{sync::Arc, time::Duration};
+use std::time::Duration;
 
 use anyhow::{Result, bail};
 use async_trait::async_trait;
@@ -13,14 +13,14 @@ use crate::{
 
 const URL: &str = "https://avtr.nekosunevr.co.uk/v1/vrchat/avatars/store/putavatarExternal";
 
-pub struct NSVR {
-    settings: Arc<Settings>,
+pub struct NSVR<'s> {
+    settings: &'s Settings,
     client: Client,
 }
 
-impl NSVR {
+impl<'s> NSVR<'s> {
     #[must_use]
-    pub fn new(settings: Arc<Settings>) -> Self {
+    pub fn new(settings: &'s Settings) -> Self {
         Self {
             settings,
             client: Client::default(),
@@ -29,7 +29,7 @@ impl NSVR {
 }
 
 #[async_trait]
-impl Provider for NSVR {
+impl Provider for NSVR<'_> {
     fn kind(&self) -> ProviderKind {
         ProviderKind::NSVR
     }
@@ -77,9 +77,5 @@ impl Provider for NSVR {
         };
 
         Ok(unique)
-    }
-
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
     }
 }
