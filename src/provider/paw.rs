@@ -15,26 +15,24 @@ use crate::{
 const URL: &str = "https://paw-api.amelia.fun/update";
 
 pub struct Paw {
-    #[allow(dead_code)]
-    settings: Arc<Settings>,
     client: Client,
 }
 
 impl Paw {
     #[must_use]
-    pub fn new(settings: Arc<Settings>) -> Self {
+    pub fn new(_settings: &Settings) -> Self {
         Self {
-            settings,
             client: Client::default(),
         }
     }
 }
 
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 struct PawResponse {
-    _success: bool,
-    _code: u16,
-    _result: Option<Value>,
+    success: bool,
+    code: u16,
+    result: Option<Value>,
     avatar: Option<Value>,
 }
 
@@ -74,9 +72,5 @@ impl Provider for Paw {
         };
 
         Ok(unique)
-    }
-
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
     }
 }

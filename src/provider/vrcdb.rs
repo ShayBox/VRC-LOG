@@ -1,4 +1,4 @@
-use std::{sync::Arc, time::Duration};
+use std::time::Duration;
 
 use anyhow::{Result, bail};
 use async_trait::async_trait;
@@ -13,14 +13,14 @@ use crate::{
 
 const URL: &str = "https://search.bs002.de/api/Avatar/putavatar";
 
-pub struct VrcDB {
-    settings: Arc<Settings>,
+pub struct VrcDB<'s> {
+    settings: &'s Settings,
     client: Client,
 }
 
-impl VrcDB {
+impl<'s> VrcDB<'s> {
     #[must_use]
-    pub fn new(settings: Arc<Settings>) -> Self {
+    pub fn new(settings: &'s Settings) -> Self {
         Self {
             settings,
             client: Client::default(),
@@ -29,7 +29,7 @@ impl VrcDB {
 }
 
 #[async_trait]
-impl Provider for VrcDB {
+impl Provider for VrcDB<'_> {
     fn kind(&self) -> ProviderKind {
         ProviderKind::VRCDB
     }
@@ -73,9 +73,5 @@ impl Provider for VrcDB {
         };
 
         Ok(unique)
-    }
-
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
     }
 }

@@ -16,7 +16,7 @@ use std::{
 use anyhow::{Result, bail};
 use chrono::Local;
 use colored::{Color, Colorize};
-use crossbeam::channel::{Receiver, Sender};
+use flume::{Receiver, Sender};
 use lazy_regex::{Lazy, Regex, lazy_regex, regex_replace_all};
 use notify::{Config, Event, PollWatcher, RecursiveMode, Watcher};
 use parking_lot::RwLock;
@@ -151,7 +151,7 @@ pub async fn process_avatars(
     #[cfg(feature = "cache")]
     let cache = cache::Cache::new().await?;
 
-    while let Ok(path) = rx.recv() {
+    while let Ok(path) = rx.recv_async().await {
         let avatar_ids = parse_avatar_ids(&path);
 
         // Clear amplitude file after reading if enabled and it's an amplitude file

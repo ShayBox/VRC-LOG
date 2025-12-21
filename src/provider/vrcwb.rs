@@ -13,14 +13,14 @@ use crate::{
 
 const URL: &str = "https://avatar.worldbalancer.com/v1/vrchat/avatars/store/putavatarExternal";
 
-pub struct VrcWB {
-    settings: Arc<Settings>,
+pub struct VrcWB<'s> {
+    settings: &'s Settings,
     client: Client,
 }
 
-impl VrcWB {
+impl<'s> VrcWB<'s> {
     #[must_use]
-    pub fn new(settings: Arc<Settings>) -> Self {
+    pub fn new(settings: &'s Settings) -> Self {
         Self {
             settings,
             client: Client::default(),
@@ -29,7 +29,7 @@ impl VrcWB {
 }
 
 #[async_trait]
-impl Provider for VrcWB {
+impl Provider for VrcWB<'_> {
     fn kind(&self) -> ProviderKind {
         ProviderKind::VRCWB
     }
@@ -68,9 +68,5 @@ impl Provider for VrcWB {
         };
 
         Ok(unique)
-    }
-
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
     }
 }
