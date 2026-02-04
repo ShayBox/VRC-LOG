@@ -1,10 +1,7 @@
 #[macro_use]
 extern crate tracing;
 
-use std::{
-    io::ErrorKind,
-    sync::{Arc, OnceLock},
-};
+use std::{io::ErrorKind, sync::OnceLock};
 
 use anyhow::Result;
 use chrono::{Local, Offset};
@@ -82,33 +79,34 @@ async fn main() -> Result<()> {
     settings.save()?;
     vrc_log::launch_game(args)?;
 
-    let settings = Arc::new(settings);
+    // This is a little wonky, but effecively we are creating a controlled memory leak
+    // which will be static for the rest of the programms runtime
+    let settings_static: &'static Settings = Box::leak(Box::new(settings));
 
-    let (mut avtrdb_actor, avtrdb_sender) = AvtrDBActor::new(settings.clone());
+    let (mut avtrdb_actor, avtrdb_sender) = AvtrDBActor::new(settings_static);
 
-    let providers = settings
+    let providers = settings_static
         .providers
         .iter()
         .map(|provider| match provider {
             #[cfg(feature = "nsvr")]
-            ProviderKind::NSVR => provider!(NSVR::new(&settings)),
+            ProviderKind::NSVR => provider!(NSVR::new(settings_static)),
             #[cfg(feature = "paw")]
-            ProviderKind::PAW => provider!(Paw::new(&settings)),
+            ProviderKind::PAW => provider!(Paw::new(settings_static)),
             #[cfg(feature = "vrcdb")]
-            ProviderKind::VRCDB => provider!(VrcDB::new(&settings)),
+            ProviderKind::VRCDB => provider!(VrcDB::new(settings_static)),
             #[cfg(feature = "vrcwb")]
-            ProviderKind::VRCWB => provider!(VrcWB::new(&settings)),
+            ProviderKind::VRCWB => provider!(VrcWB::new(settings_static)),
             #[cfg(feature = "avtrdb")]
-            ProviderKind::AVTRDB => provider!(VrcWB::new(&settings)),
-            //  provider!(AvtrDB::new(avtrdb_sender.clone())),
+            ProviderKind::AVTRDB => provider!(AvtrDB::new(avtrdb_sender.clone())),
         })
         .collect::<Vec<_>>();
 
     let avtrdb_handle = tokio::spawn(async move { avtrdb_actor.run().await });
 
     let handle = tokio::spawn(vrc_log::process_avatars(
-        providers.clone(), // this is bad
-        settings.clear_amplitude,
+        providers,
+        settings_static.clear_amplitude,
         (tx, rx),
     ));
 
@@ -130,11 +128,13 @@ async fn main() -> Result<()> {
     let terminate = std::future::pending::<()>();
 
     tokio::select! {
-        _ = ctrl_c => {
+        () = ctrl_c => {
             handle.abort();
+            avtrdb_handle.abort();
         },
-        _ = terminate => {
+        () = terminate => {
             handle.abort();
+            avtrdb_handle.abort();
         },
     }
 

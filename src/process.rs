@@ -14,7 +14,7 @@ pub async fn process_with_cache<I: IntoIterator<Item = String>>(
 ) -> anyhow::Result<()> {
     let checked_ids = cache.check_all_ids(avatar_ids).await?;
 
-    let (tx, mut rx) = flume::unbounded();
+    let (tx, rx) = flume::unbounded();
 
     for (id, provider_bits) in checked_ids {
         print_colorized(&id);
