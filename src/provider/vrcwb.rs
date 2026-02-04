@@ -1,4 +1,4 @@
-use std::{sync::Arc, time::Duration};
+use std::time::Duration;
 
 use anyhow::{Result, bail};
 use async_trait::async_trait;

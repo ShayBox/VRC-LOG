@@ -10,20 +10,15 @@ use strum::{Display, IntoEnumIterator};
 
 use crate::{discord, discord::DEVELOPER_ID, provider::ProviderKind};
 
-#[derive(Display, Deserialize, Serialize)]
+#[derive(Display, Deserialize, Serialize, Default)]
 pub enum Attribution {
     #[strum(to_string = "Anonymously (VRC-LOG Dev)")]
+    #[default]
     Anonymous,
     #[strum(to_string = "Discord RPC ({0})")]
     DiscordRPC(String),
     #[strum(to_string = "Discord ID (Manual Input)")]
     DiscordID(String),
-}
-
-impl Default for Attribution {
-    fn default() -> Self {
-        Self::Anonymous
-    }
 }
 
 impl Attribution {

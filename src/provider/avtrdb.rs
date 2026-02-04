@@ -1,4 +1,4 @@
-use std::{sync::Arc, time::Duration};
+use std::time::Duration;
 
 use anyhow::{Result, bail};
 use colored::{Color, Colorize};
@@ -30,8 +30,8 @@ pub struct AvtrDB {
     sender: Sender<String>,
 }
 
-pub struct AvtrDBActor {
-    settings: Arc<Settings>,
+pub struct AvtrDBActor<'s> {
+    settings: &'s Settings,
     client: Client,
     buffer: Vec<String>,
     base_url: String,
@@ -40,7 +40,9 @@ pub struct AvtrDBActor {
     last_flush: Instant,
 }
 
-impl AvtrDBActor {
+impl<'s> AvtrDBActor<'s> {
+    /// # Errors
+    /// Will return `Err` if anything errors
     pub async fn run(&mut self) -> anyhow::Result<()> {
         while let Ok(id) = self.channel.recv_async().await {
             self.buffer.push(id);
@@ -49,7 +51,7 @@ impl AvtrDBActor {
                 || self.last_flush.elapsed() > self.flush_interval
             {
                 match self.flush_buffer().await {
-                    Ok(_) => (),
+                    Ok(()) => (),
                     Err(err) => error!("[{LOG_NAME}]: Failed to flush buffer: {err}"),
                 }
             }
@@ -59,7 +61,7 @@ impl AvtrDBActor {
     }
 
     #[must_use]
-    pub fn new(settings: Arc<Settings>) -> (Self, Sender<String>) {
+    pub fn new(settings: &'s Settings) -> (Self, Sender<String>) {
         Self::new_with_base_url_and_flush_interval(
             settings,
             FLUSH_THRESHOLD,
@@ -70,7 +72,7 @@ impl AvtrDBActor {
 
     #[must_use]
     pub fn new_with_base_url_and_flush_interval(
-        settings: Arc<Settings>,
+        settings: &'s Settings,
         capacity: usize,
         base_url: String,
         flush_interval: Duration,
