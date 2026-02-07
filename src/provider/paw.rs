@@ -1,15 +1,15 @@
 use std::time::Duration;
 
-use anyhow::{Result, bail};
+use anyhow::{bail, Result};
 use async_trait::async_trait;
 use reqwest::{Client, StatusCode};
 use serde::Deserialize;
 use serde_json::Value;
 
 use crate::{
-    USER_AGENT,
     provider::{Provider, ProviderKind},
     settings::Settings,
+    USER_AGENT,
 };
 
 const URL: &str = "https://paw-api.amelia.fun/update";
@@ -31,9 +31,9 @@ impl Paw {
 #[allow(dead_code)]
 struct PawResponse {
     success: bool,
-    code: u16,
-    result: Option<Value>,
-    avatar: Option<Value>,
+    code:    u16,
+    result:  Option<Value>,
+    avatar:  Option<Value>,
 }
 
 #[async_trait]

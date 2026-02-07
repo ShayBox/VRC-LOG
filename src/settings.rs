@@ -1,9 +1,11 @@
 use anyhow::Result;
 use derive_config::DeriveTomlConfig;
 use inquire::{
-    Confirm, MultiSelect, Select,
     list_option::ListOption,
     validator::{ErrorMessage, Validation},
+    Confirm,
+    MultiSelect,
+    Select,
 };
 use serde::{Deserialize, Serialize};
 use strum::{Display, IntoEnumIterator};
@@ -38,8 +40,8 @@ impl Attribution {
 pub struct Settings {
     #[serde(default)]
     pub clear_amplitude: bool,
-    pub attribution: Attribution,
-    pub providers: Vec<ProviderKind>,
+    pub attribution:     Attribution,
+    pub providers:       Vec<ProviderKind>,
 }
 
 impl Settings {
@@ -65,7 +67,7 @@ impl Settings {
         let providers = ProviderKind::iter().collect();
 
         let providers = MultiSelect::new("Select which providers to use:", providers)
-            .with_all_selected_by_default()
+            .with_default(&[0])
             .with_validator(|list: &[ListOption<&ProviderKind>]| {
                 if list.is_empty() {
                     let message = String::from("You must select at least one.");

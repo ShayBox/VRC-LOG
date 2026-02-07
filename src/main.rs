@@ -10,15 +10,16 @@ use crossterm::{execute, terminal::SetTitle};
 use derive_config::{ConfigError, DeriveTomlConfig};
 use notify::PollWatcher;
 use terminal_link::Link;
-use time::{UtcOffset, macros::format_description};
+use time::{macros::format_description, UtcOffset};
 use tokio::signal;
 use tracing::level_filters::LevelFilter;
-use tracing_subscriber::{EnvFilter, fmt::time::OffsetTime};
+use tracing_subscriber::{fmt::time::OffsetTime, EnvFilter};
 use vrc_log::{
-    CARGO_PKG_HOMEPAGE, provider,
-    provider::{ProviderKind, avtrdb::AvtrDBActor, prelude::*},
+    provider,
+    provider::{avtrdb::AvtrDBActor, prelude::*, ProviderKind},
     settings::Settings,
     vrchat::{VRCHAT_AMP_PATH, VRCHAT_LOW_PATH},
+    CARGO_PKG_HOMEPAGE,
 };
 
 /* Watchers will stop working if they get dropped. */

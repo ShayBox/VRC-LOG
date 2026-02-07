@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use anyhow::{Result, bail};
+use anyhow::{bail, Result};
 use colored::{Color, Colorize};
 use flume::{Receiver, Sender};
 use reqwest::{Client, StatusCode, Url};
@@ -10,9 +10,9 @@ use terminal_link::Link;
 use tokio::time::Instant;
 
 use crate::{
-    USER_AGENT,
     provider::{Provider, ProviderKind},
     settings::Settings,
+    USER_AGENT,
 };
 
 const INGEST_BASE_URL: &str = "https://api.avtrdb.com/v3/";
@@ -31,13 +31,13 @@ pub struct AvtrDB {
 }
 
 pub struct AvtrDBActor<'s> {
-    settings: &'s Settings,
-    client: Client,
-    buffer: Vec<String>,
-    base_url: String,
-    channel: Receiver<String>,
+    settings:       &'s Settings,
+    client:         Client,
+    buffer:         Vec<String>,
+    base_url:       String,
+    channel:        Receiver<String>,
     flush_interval: Duration,
-    last_flush: Instant,
+    last_flush:     Instant,
 }
 
 impl<'s> AvtrDBActor<'s> {
@@ -177,8 +177,8 @@ impl AvtrDB {
 #[allow(dead_code)]
 struct IngestResponse {
     avatars_enqueued: u64,
-    invalid_ids: u64,
-    ticket: String,
+    invalid_ids:      u64,
+    ticket:           String,
 }
 
 #[async_trait::async_trait]

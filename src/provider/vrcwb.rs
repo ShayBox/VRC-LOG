@@ -1,21 +1,21 @@
 use std::time::Duration;
 
-use anyhow::{Result, bail};
+use anyhow::{bail, Result};
 use async_trait::async_trait;
 use reqwest::{Client, StatusCode};
 use serde_json::json;
 
 use crate::{
-    USER_AGENT,
     provider::{Provider, ProviderKind},
     settings::Settings,
+    USER_AGENT,
 };
 
 const URL: &str = "https://avatar.worldbalancer.com/v1/vrchat/avatars/store/putavatarExternal";
 
 pub struct VrcWB<'s> {
     settings: &'s Settings,
-    client: Client,
+    client:   Client,
 }
 
 impl<'s> VrcWB<'s> {

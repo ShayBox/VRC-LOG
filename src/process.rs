@@ -1,10 +1,8 @@
-use std::sync::Arc;
-
-use crate::print_colorized;
-use crate::provider::Provider;
+use std::{collections::HashMap, sync::Arc};
 
 #[cfg(feature = "cache")]
 use crate::cache;
+use crate::{print_colorized, provider::Provider};
 
 #[cfg(feature = "cache")]
 pub async fn process_with_cache<I: IntoIterator<Item = String>>(
@@ -12,45 +10,61 @@ pub async fn process_with_cache<I: IntoIterator<Item = String>>(
     cache: &cache::Cache,
     avatar_ids: I,
 ) -> anyhow::Result<()> {
-    let checked_ids = cache.check_all_ids(avatar_ids).await?;
+    let checked_ids = cache
+        .check_all_ids(avatar_ids)
+        .await?
+        .into_iter()
+        .collect::<Vec<_>>();
 
     let (tx, rx) = flume::unbounded();
+    let checked_ids = Arc::new(checked_ids);
+    let mut base_bits = HashMap::new();
 
-    for (id, provider_bits) in checked_ids {
-        print_colorized(&id);
+    for (id, provider_bits) in checked_ids.iter() {
+        print_colorized(id);
+        base_bits.insert(id.clone(), *provider_bits);
+    }
 
-        for p in providers
-            .iter()
-            .filter(|provider| provider_bits & provider.kind() as u32 == 0)
-        {
-            let p = p.clone();
-            let id_clone = id.clone();
-            let tx_clone = tx.clone();
-            tokio::spawn(async move {
-                let kind = p.kind();
-                match p.send_avatar_id(&id_clone).await {
+    for provider in &providers {
+        let provider = provider.clone();
+        let tx_clone = tx.clone();
+        let checked_ids = checked_ids.clone();
+        tokio::spawn(async move {
+            let kind = provider.kind();
+            let kind_bit = kind as u32;
+            for (id, provider_bits) in checked_ids.iter() {
+                if provider_bits & kind_bit != 0 {
+                    continue;
+                }
+                match provider.send_avatar_id(id).await {
                     Ok(success) => {
                         if success {
                             info!("^ Successfully Submitted to {kind}");
-                            let _ = tx_clone
-                                .send_async((id_clone, provider_bits | kind as u32))
-                                .await;
+                            let _ = tx_clone.send_async((id.clone(), kind_bit)).await;
                         }
                     }
                     Err(err) => {
                         error!("^ Failed to submit to {kind}: {err}");
                     }
                 }
-            });
-        }
+            }
+        });
     }
 
     drop(tx);
 
-    let mut buffer = Vec::new();
+    let mut updated_bits = HashMap::new();
 
-    while let Ok(msg) = rx.recv_async().await {
-        buffer.push(msg);
+    while let Ok((id, kind_bit)) = rx.recv_async().await {
+        let entry = updated_bits.entry(id).or_insert(0);
+        *entry |= kind_bit;
+    }
+
+    let mut buffer = Vec::new();
+    for (id, bits) in base_bits {
+        if let Some(add_bits) = updated_bits.get(&id) {
+            buffer.push((id, bits | add_bits));
+        }
     }
 
     cache.store_avatar_ids_with_providers(buffer).await
@@ -90,19 +104,20 @@ pub async fn process_without_cache<I: IntoIterator<Item = String>>(
 
 #[cfg(test)]
 mod tests {
-    use crate::provider::ProviderKind;
+    use std::sync::Arc;
 
-    use super::*;
     use anyhow::Result;
     use async_trait::async_trait;
-    use std::sync::Arc;
     use strum::IntoEnumIterator;
     use tokio::sync::Mutex;
 
+    use super::*;
+    use crate::provider::ProviderKind;
+
     #[derive(Clone)]
     struct MockProvider {
-        kind: ProviderKind,
-        sent: Arc<Mutex<Vec<String>>>,
+        kind:    ProviderKind,
+        sent:    Arc<Mutex<Vec<String>>>,
         succeed: bool,
     }
 
