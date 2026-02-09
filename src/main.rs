@@ -10,21 +10,21 @@ use crossterm::{execute, terminal::SetTitle};
 use derive_config::{ConfigError, DeriveTomlConfig};
 use notify::PollWatcher;
 use terminal_link::Link;
-use time::{macros::format_description, UtcOffset};
+use time::{UtcOffset, macros::format_description};
 use tokio::signal;
 use tracing::level_filters::LevelFilter;
-use tracing_subscriber::{fmt::time::OffsetTime, EnvFilter};
+use tracing_subscriber::{EnvFilter, fmt::time::OffsetTime};
 use vrc_log::{
-    provider,
-    provider::{avtrdb::AvtrDBActor, prelude::*, ProviderKind},
+    CARGO_PKG_HOMEPAGE, provider,
+    provider::{ProviderKind, avtrdb::AvtrDBActor, prelude::*},
     settings::Settings,
     vrchat::{VRCHAT_AMP_PATH, VRCHAT_LOW_PATH},
-    CARGO_PKG_HOMEPAGE,
 };
 
 /* Watchers will stop working if they get dropped. */
 static WATCHERS: OnceLock<Vec<PollWatcher>> = OnceLock::new();
 
+#[allow(clippy::too_many_lines)]
 #[tokio::main]
 async fn main() -> Result<()> {
     #[cfg(feature = "title")]
@@ -50,18 +50,28 @@ async fn main() -> Result<()> {
         info!("{link}");
     }
 
-    let args = std::env::args();
-    let settings = Settings::load().unwrap_or_else(|error| match error {
-        ConfigError::Io(error) if error.kind() == ErrorKind::NotFound => {
-            info!("Welcome to VRC-LOG! Please follow the setup wizard");
-            Settings::try_wizard().expect("Failed to setup wizard")
-        }
-        error => {
-            error!("There was an error loading the settings: {error}");
-            error!("Most likely an update. Please follow the setup wizard");
-            Settings::try_wizard().expect("Failed to setup wizard")
-        }
-    });
+    let mut args = std::env::args().collect::<Vec<_>>();
+    let force_wizard = args.iter().any(|arg| arg == "--wizard" || arg == "-w");
+    if force_wizard {
+        args.retain(|arg| arg != "--wizard" && arg != "-w");
+    }
+
+    let settings = if force_wizard {
+        info!("Setup wizard requested via flag");
+        Settings::try_wizard().expect("Failed to setup wizard")
+    } else {
+        Settings::load().unwrap_or_else(|error| match error {
+            ConfigError::Io(error) if error.kind() == ErrorKind::NotFound => {
+                info!("Welcome to VRC-LOG! Please follow the setup wizard");
+                Settings::try_wizard().expect("Failed to setup wizard")
+            }
+            error => {
+                error!("There was an error loading the settings: {error}");
+                error!("Most likely an update. Please follow the setup wizard");
+                Settings::try_wizard().expect("Failed to setup wizard")
+            }
+        })
+    };
 
     let (tx, rx) = flume::unbounded();
     let _ = WATCHERS.set(vec![
@@ -78,7 +88,7 @@ async fn main() -> Result<()> {
     }
 
     settings.save()?;
-    vrc_log::launch_game(args)?;
+    vrc_log::launch_game(&args)?;
 
     // This is a little wonky, but effecively we are creating a controlled memory leak
     // which will be static for the rest of the programms runtime

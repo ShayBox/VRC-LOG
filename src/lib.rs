@@ -3,7 +3,6 @@ extern crate tracing;
 
 use std::{
     collections::HashSet,
-    env::Args,
     ffi::OsStr,
     fs::{File, create_dir_all},
     io::{BufRead, BufReader, Error},
@@ -123,10 +122,9 @@ pub fn watch<P: AsRef<Path>>(
 /// Will return `Err` if `Command::spawn` errors
 /// # Panics
 /// Will panic if `Child::wait` panics
-pub fn launch_game(args: Args) -> Result<()> {
-    let args = args.collect::<Vec<_>>();
+pub fn launch_game(args: &[String]) -> Result<()> {
     if args.len() > 1 {
-        let mut child = Command::new(&args[1])
+        let mut child = Command::new(args[1].clone())
             .args(args.iter().skip(2))
             .stderr(Stdio::null())
             .stdout(Stdio::null())
