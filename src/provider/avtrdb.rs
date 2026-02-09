@@ -161,6 +161,7 @@ impl<'s> AvtrDBActor<'s> {
         }
 
         self.buffer.clear();
+        self.last_flush = Instant::now();
 
         Ok(())
     }
