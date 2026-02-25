@@ -48,7 +48,7 @@ impl Provider for NSVR<'_> {
             .post(URL)
             .header("User-Agent", USER_AGENT)
             .json(&json)
-            .timeout(Duration::from_secs(3))
+            .timeout(Duration::from_secs(5))
             .send()
             .await
         {

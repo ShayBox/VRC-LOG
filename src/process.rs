@@ -7,6 +7,7 @@ use crate::{print_colorized, provider::Provider};
 #[cfg(feature = "cache")]
 pub async fn process_with_cache<I: IntoIterator<Item = String>>(
     providers: Vec<Arc<Box<dyn Provider>>>,
+    print_scanned: bool,
     cache: &cache::Cache,
     avatar_ids: I,
 ) -> anyhow::Result<()> {
@@ -21,8 +22,10 @@ pub async fn process_with_cache<I: IntoIterator<Item = String>>(
     let mut base_bits = HashMap::new();
 
     for (id, provider_bits) in checked_ids.iter() {
-        print_colorized(id);
         base_bits.insert(id.clone(), *provider_bits);
+        if print_scanned {
+            print_colorized(id);
+        }
     }
 
     for provider in &providers {
@@ -37,10 +40,12 @@ pub async fn process_with_cache<I: IntoIterator<Item = String>>(
                     continue;
                 }
                 match provider.send_avatar_id(id).await {
-                    Ok(success) => {
-                        if success {
-                            info!("^ Successfully Submitted to {kind}");
-                            let _ = tx_clone.send_async((id.clone(), kind_bit)).await;
+                    Ok(unique) => {
+                        let _ = tx_clone.send_async((id.clone(), kind_bit)).await;
+                        if unique {
+                            print_colorized(format!("{id} You were first to send this to {kind}!"));
+                        } else {
+                            debug!("vrcx://avatar/{id} was already found on {kind}");
                         }
                     }
                     Err(err) => {
@@ -73,10 +78,13 @@ pub async fn process_with_cache<I: IntoIterator<Item = String>>(
 #[cfg(not(feature = "cache"))]
 pub async fn process_without_cache<I: IntoIterator<Item = String>>(
     providers: Vec<Arc<Box<dyn Provider>>>,
+    print_scanned: bool,
     avatar_ids: I,
 ) -> anyhow::Result<()> {
     for avatar_id in avatar_ids {
-        print_colorized(&avatar_id);
+        if print_scanned {
+            print_colorized(&avatar_id);
+        }
 
         // Collect all provider futures for this avatar_id
         let futures = providers
@@ -89,7 +97,9 @@ pub async fn process_without_cache<I: IntoIterator<Item = String>>(
             match result {
                 Ok(unique) => {
                     if unique {
-                        info!("^ Successfully Submitted to {kind}");
+                        print_colorized(format!("{id} You were first to send this to {kind}!"));
+                    } else {
+                        debug!("vrcx://avatar/{id} was already found on {kind}");
                     }
                 }
                 Err(error) => {
@@ -190,7 +200,7 @@ mod tests {
             .await?;
 
         let avatar_ids = vec!["avtr_1".to_string()];
-        process_with_cache(providers, &cache, avatar_ids).await?;
+        process_with_cache(providers, true, &cache, avatar_ids).await?;
 
         let sent_a = sent_a.lock().await;
         let sent_b = sent_b.lock().await;
@@ -213,14 +223,14 @@ mod tests {
 
         let avatar_ids = vec!["avtr_42".to_string()];
 
-        process_with_cache(providers, &cache, avatar_ids).await?;
+        process_with_cache(providers, true, &cache, avatar_ids).await?;
 
         let result = cache
             .check_all_ids(vec!["avtr_42".to_string()].into_iter())
             .await?;
 
         let bits = result["avtr_42"];
-        assert!(bits & ProviderKind::PAW as u32 != 0);
+        assert_ne!(bits & ProviderKind::PAW as u32, 0);
 
         Ok(())
     }
@@ -235,7 +245,7 @@ mod tests {
 
         let avatar_ids = vec!["avtr_fail".to_string()];
 
-        process_with_cache(providers, &cache, avatar_ids).await?;
+        process_with_cache(providers, true, &cache, avatar_ids).await?;
 
         let sent = sent.lock().await;
         assert_eq!(sent.len(), 1, "Provider should still be called");
@@ -245,7 +255,7 @@ mod tests {
             .check_all_ids(vec!["avtr_fail".to_string()].into_iter())
             .await?;
 
-        assert!(result["avtr_fail"] == 0, "Cache must not update on failure");
+        assert_eq!(result["avtr_fail"], 0, "Cache must not update on failure");
 
         Ok(())
     }
@@ -269,8 +279,8 @@ mod tests {
     fn provider_bit_check_logic() {
         let bits = ProviderKind::AVTRDB as u32 | ProviderKind::NSVR as u32;
 
-        assert!(bits & ProviderKind::AVTRDB as u32 != 0);
-        assert!(bits & ProviderKind::NSVR as u32 != 0);
-        assert!(bits & ProviderKind::PAW as u32 == 0);
+        assert_ne!(bits & ProviderKind::AVTRDB as u32, 0);
+        assert_ne!(bits & ProviderKind::NSVR as u32, 0);
+        assert_eq!(bits & ProviderKind::PAW as u32, 0);
     }
 }

@@ -4,7 +4,8 @@ extern crate tracing;
 use std::{
     collections::HashSet,
     ffi::OsStr,
-    fs::{File, create_dir_all},
+    fmt::Display,
+    fs::{create_dir_all, File},
     io::{BufRead, BufReader, Error},
     path::{Path, PathBuf},
     process::{Command, Stdio},
@@ -12,11 +13,11 @@ use std::{
     time::Duration,
 };
 
-use anyhow::{Result, bail};
+use anyhow::{bail, Result};
 use chrono::Local;
 use colored::{Color, Colorize};
 use flume::{Receiver, Sender};
-use lazy_regex::{Lazy, Regex, lazy_regex, regex_replace_all};
+use lazy_regex::{lazy_regex, regex_replace_all, Lazy, Regex};
 use notify::{Config, Event, PollWatcher, RecursiveMode, Watcher};
 use parking_lot::RwLock;
 use terminal_link::Link;
@@ -25,7 +26,7 @@ use terminal_link::Link;
 use crate::process::process_with_cache;
 #[cfg(not(feature = "cache"))]
 use crate::process::process_without_cache;
-use crate::provider::Provider;
+use crate::{provider::Provider, settings::Settings};
 
 #[cfg(feature = "cache")]
 pub mod cache;
@@ -143,7 +144,7 @@ pub fn launch_game(args: &[String]) -> Result<()> {
 /// Will return `Err` if `Sqlite::new` or `Provider::send_avatar_id` errors
 pub async fn process_avatars(
     providers: Vec<Arc<Box<dyn Provider>>>,
-    clear_amplitude: bool,
+    settings: &Settings,
     (_tx, rx): (Sender<PathBuf>, Receiver<PathBuf>),
 ) -> Result<()> {
     #[cfg(feature = "cache")]
@@ -153,7 +154,9 @@ pub async fn process_avatars(
         let avatar_ids = parse_avatar_ids(&path);
 
         // Clear amplitude file after reading if enabled and it's an amplitude file
-        if clear_amplitude && path.file_name().and_then(|n| n.to_str()) == Some("amplitude.cache") {
+        if settings.clear_amplitude
+            && path.file_name().and_then(|n| n.to_str()) == Some("amplitude.cache")
+        {
             match std::fs::write(&path, "") {
                 Ok(()) => debug!("Cleared amplitude file: {path:?}"),
                 Err(error) => warn!("Failed to clear amplitude file: {error}"),
@@ -161,9 +164,15 @@ pub async fn process_avatars(
         }
 
         #[cfg(feature = "cache")]
-        process_with_cache(providers.clone(), &cache, avatar_ids).await?;
+        process_with_cache(
+            providers.clone(),
+            settings.print_scanned,
+            &cache,
+            avatar_ids,
+        )
+        .await?;
         #[cfg(not(feature = "cache"))]
-        process_without_cache(providers.clone(), avatar_ids).await?;
+        process_without_cache(providers.clone(), settings.print_scanned, avatar_ids).await?;
     }
 
     bail!("Channel Closed")
@@ -215,7 +224,7 @@ pub fn parse_avatar_ids(path: &PathBuf) -> impl IntoIterator<Item = String> {
 }
 
 /// # Print with colorized rainbow rows for separation
-pub fn print_colorized(avatar_id: &str) {
+pub fn print_colorized(avatar_id: impl Display) {
     static INDEX: LazyLock<RwLock<usize>> = LazyLock::new(|| RwLock::new(0));
     static COLORS: LazyLock<[Color; 12]> = LazyLock::new(|| {
         [

@@ -38,9 +38,9 @@ impl Attribution {
 
 #[derive(DeriveTomlConfig, Deserialize, Serialize, Default)]
 pub struct Settings {
-    #[serde(default)]
-    pub clear_amplitude: bool,
     pub attribution:     Attribution,
+    pub clear_amplitude: bool,
+    pub print_scanned:   bool,
     pub providers:       Vec<ProviderKind>,
 }
 
@@ -84,9 +84,16 @@ impl Settings {
         .with_default(true)
         .prompt()?;
 
+        let print_scanned = Confirm::new(
+            "Print all scanned avatar ids instead of just the uniquely discovered ones",
+        )
+        .with_default(false)
+        .prompt()?;
+
         Ok(Self {
-            clear_amplitude,
             attribution,
+            clear_amplitude,
+            print_scanned,
             providers,
         })
     }
