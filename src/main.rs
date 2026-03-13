@@ -111,6 +111,8 @@ async fn main() -> Result<()> {
             ProviderKind::VRCWB => provider!(VrcWB::new(settings)),
             #[cfg(feature = "avtrdb")]
             ProviderKind::AVTRDB => provider!(AvtrDB::new(avtrdb_sender.clone())),
+            #[cfg(feature = "avtrzip")]
+            ProviderKind::AVTRZIP => provider!(AvtrZip::new()),
         })
         .collect::<Vec<_>>();
 

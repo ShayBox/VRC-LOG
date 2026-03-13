@@ -37,7 +37,9 @@ strum = { version = "0.28", features = ["derive"] }
 terminal-link = "0.1"
 time = { version = "0.3", features = ["macros"] }
 tokio = { version = "1", features = ["full"] }
-tokio-rusqlite-new = { version = "0.12", features = ["bundled"], optional = true }
+tokio-rusqlite-new = { version = "0.12", features = [
+    "bundled",
+], optional = true }
 tracing = "0.1"
 tracing-subscriber = { version = "=0.3.19", features = ["env-filter", "time"] }
 
@@ -59,6 +61,7 @@ windows = { version = "0.62", features = [
 default = [
     "cache",
     "avtrdb",
+    "avtrzip",
     "nsvr",
     "paw",
     "vrcdb",
@@ -69,6 +72,7 @@ default = [
 # VRChat Avatar Database Providers
 cache = ["dep:tokio-rusqlite-new"]
 avtrdb = ["dep:reqwest", "discord"]
+avtrzip = ["dep:reqwest"]
 nsvr = ["dep:reqwest", "discord"]
 paw = ["dep:reqwest"]
 vrcdb = ["dep:reqwest", "discord"]
