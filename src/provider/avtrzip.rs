@@ -1,29 +1,21 @@
 use std::time::Duration;
 
-use anyhow::{Result, bail};
+use anyhow::{bail, Result};
 use async_trait::async_trait;
 use reqwest::{Client, StatusCode};
 use serde::Deserialize;
 use serde_json::json;
 
 use crate::{
-    USER_AGENT,
     provider::{Provider, ProviderKind},
+    USER_AGENT,
 };
 
 const URL: &str = "http://api.avtr.zip/v1/avatars/push";
 
+#[derive(Default)]
 pub struct AvtrZip {
     client: Client,
-}
-
-impl AvtrZip {
-    #[must_use]
-    pub fn new() -> Self {
-        Self {
-            client: Client::default(),
-        }
-    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -33,7 +25,7 @@ enum AvtrZipResponse {
         #[allow(dead_code)]
         success: bool,
         #[serde(rename = "isNew")]
-        is_new: bool,
+        is_new:  bool,
     },
     Error {
         error: String,

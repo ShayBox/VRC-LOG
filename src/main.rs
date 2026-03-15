@@ -9,6 +9,7 @@ use chrono::{Local, Offset};
 use crossterm::{execute, terminal::SetTitle};
 use derive_config::{ConfigError, DeriveTomlConfig};
 use notify::PollWatcher;
+use strum::IntoEnumIterator;
 use terminal_link::Link;
 use time::{macros::format_description, UtcOffset};
 use tokio::signal;
@@ -33,6 +34,8 @@ async fn main() -> Result<()> {
 
     /* Debugging: RUST_LOG=vrc_log=debug */
     tracing_subscriber::fmt()
+        .with_ansi(true)
+        .with_ansi_sanitization(false)
         .with_env_filter(
             EnvFilter::builder()
                 .with_default_directive(LevelFilter::INFO.into())
@@ -57,7 +60,7 @@ async fn main() -> Result<()> {
         args.retain(|arg| arg != "--wizard" && arg != "-w");
     }
 
-    let settings = if force_wizard {
+    let mut settings = if force_wizard {
         info!("Setup wizard requested via flag");
         Settings::try_wizard().expect("Failed to setup wizard")
     } else {
@@ -73,6 +76,11 @@ async fn main() -> Result<()> {
             }
         })
     };
+
+    if settings.providers.len() != ProviderKind::iter().count() {
+        info!("Additional providers have been added, triggering setup wizard");
+        settings = Settings::try_wizard().expect("Failed to setup wizard");
+    }
 
     let (tx, rx) = flume::unbounded();
     let _ = WATCHERS.set(vec![
@@ -100,7 +108,8 @@ async fn main() -> Result<()> {
     let providers = settings
         .providers
         .iter()
-        .map(|provider| match provider {
+        .filter(|(_, enabled)| **enabled)
+        .map(|(provider, _)| match provider {
             #[cfg(feature = "nsvr")]
             ProviderKind::NSVR => provider!(NSVR::new(settings)),
             #[cfg(feature = "paw")]
@@ -112,7 +121,7 @@ async fn main() -> Result<()> {
             #[cfg(feature = "avtrdb")]
             ProviderKind::AVTRDB => provider!(AvtrDB::new(avtrdb_sender.clone())),
             #[cfg(feature = "avtrzip")]
-            ProviderKind::AVTRZIP => provider!(AvtrZip::new()),
+            ProviderKind::AVTRZIP => provider!(AvtrZip::default()),
         })
         .collect::<Vec<_>>();
 

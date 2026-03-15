@@ -1,6 +1,6 @@
 [package]
 name = "vrc-log"
-version = "0.15.2"
+version = "0.15.3"
 edition = "2024"
 license = "MIT"
 readme = "README.md"
@@ -16,7 +16,7 @@ repository = "https://github.com/ShayBox/VRC-LOG"
 [dependencies]
 anyhow = "1"
 async-trait = "0.1"
-cached = { version = "0.56", optional = true }
+cached = { version = "0.58", optional = true }
 chrono = "0.4"
 colored = "3"
 crossterm = { version = "0.29", optional = true }
@@ -37,11 +37,9 @@ strum = { version = "0.28", features = ["derive"] }
 terminal-link = "0.1"
 time = { version = "0.3", features = ["macros"] }
 tokio = { version = "1", features = ["full"] }
-tokio-rusqlite-new = { version = "0.12", features = [
-    "bundled",
-], optional = true }
+tokio-rusqlite-new = { version = "0.12", features = ["bundled"], optional = true }
 tracing = "0.1"
-tracing-subscriber = { version = "=0.3.19", features = ["env-filter", "time"] }
+tracing-subscriber = { version = "0.3", features = ["env-filter", "time", "ansi"] }
 
 [dev-dependencies]
 criterion = "0.8"

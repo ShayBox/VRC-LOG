@@ -17,25 +17,27 @@ pub mod vrcwb;
 
 pub mod prelude;
 
-#[derive(EnumIter, Display, Deserialize, Serialize, Clone, Copy, PartialEq, Eq, PartialOrd)]
 #[repr(u32)]
+#[derive(
+    EnumIter, Display, Deserialize, Serialize, Clone, Copy, PartialEq, Eq, PartialOrd, Hash,
+)]
 pub enum ProviderKind {
     #[cfg(feature = "avtrdb")]
     #[strum(to_string = "avtrDB - Avatar Search")]
-    AVTRDB = 1 << 0,
+    AVTRDB  = 1 << 0,
     #[cfg(feature = "nsvr")]
     #[strum(to_string = "NSVR - NekoSune Community")]
     #[serde(alias = "VRCDS")]
-    NSVR = 1 << 1,
+    NSVR    = 1 << 1,
     #[cfg(feature = "paw")]
     #[strum(to_string = "PAW - Puppy's Avatar World")]
-    PAW = 1 << 2,
+    PAW     = 1 << 2,
     #[cfg(feature = "vrcdb")]
     #[strum(to_string = "VRCDB - Avatar Search")]
-    VRCDB = 1 << 3,
+    VRCDB   = 1 << 3,
     #[cfg(feature = "vrcwb")]
     #[strum(to_string = "VRCWB - World Balancer")]
-    VRCWB = 1 << 4,
+    VRCWB   = 1 << 4,
     #[cfg(feature = "avtrzip")]
     #[strum(to_string = "avtr․zip - Advanced Avatar Search")]
     AVTRZIP = 1 << 5,
