@@ -52,7 +52,7 @@ You must manually close it to scan the collected avatars, it will re-open automa
 
 - [avtrDB - Avatar Search] - [Discord](https://discord.gg/ZxB6w2hGfU) / [VRCX](https://api.avtrdb.com/v1/avatar/search/vrcx) / [Web](https://avtrdb.com)
 - [avtr.zip - Advanced Avatar Search] - [Discord](https://discord.gg/spfmB7S78n) / [VRCX](https://vrcx.avtr.zip) / [Web](https://avtr.zip) / [World](https://vrchat.com/home/world/wrld_0ae3e886-52eb-4ee0-aa0c-ef7d5a9fb2d8/info)
-- [NSVR - NekoSune Community] - [VRCX](https://avtr.nekosunevr.co.uk/vrcx_search) / [Web](https://avtr.nekosunevr.co.uk)
+- [NSVR - NekoSune Community] [^1] - [VRCX](https://vrcavatarsearch.nekosunevr.co.uk/vrcx_search) / [Web](https://vrcavatarsearch.nekosunevr.co.uk)
 - [PAW - Puppy's Avatar World] - [Discord](https://discord.gg/zHhs4nQYxX) / [VRCX](https://paw-api.amelia.fun/vrcx_search) / [Web](https://paw.amelia.fun)
 - [VRCDB - Avatar Search] - [Discord](https://discord.gg/q427ecnUvj) / [VRCX](https://vrcx.vrcdb.com/avatars/Avatar/VRCX) / [Web](https://vrcdb.com) / [World](https://vrchat.com/home/world/wrld_1146f625-5d42-40f5-bfe7-06a7664e2796)
 - [VRCWB - World Balancer] - [VRCX](https://avatarwbvrcxsearch.worldbalancer.com/vrcx_search) / [Web](https://avatar.worldbalancer.com/search.php) / [WB Support](https://support.worldbalancer.com)
@@ -65,13 +65,15 @@ You must manually close it to scan the collected avatars, it will re-open automa
 
 Additional contributions welcome, please open an issue, pull request, or join Discord.
 
+[^1]: **Note:** This endpoint has been flagged by some antivirus software (e.g., Norton) as a false positive. If you experience connection issues, please whitelist the domain or use an alternative anti-virus. (Norton is generally considered to be one of the worst)
+
 [VRCX]: https://github.com/vrcx-team/VRCX?tab=readme-ov-file#--vrcx
 
 [avtrDB - Avatar Search]: https://avtrdb.com
 
 [avtr.zip - Avatar Database]: https://avtr.zip
 
-[NSVR - NekoSune Community]: https://avtr.nekosunevr.co.uk
+[NSVR - NekoSune Community]: https://vrcavatarsearch.nekosunevr.co.uk
 
 [PAW - Puppy's Avatar World]: https://paw.amelia.fun
 
