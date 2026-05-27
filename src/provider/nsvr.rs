@@ -11,7 +11,7 @@ use crate::{
     USER_AGENT,
 };
 
-const URL: &str = "https://avtr.nekosunevr.co.uk/v1/vrchat/avatars/store/putavatarExternal";
+const URL: &str = "https://api-avatar.nekosunevr.co.uk/v1/vrchat/avatars/store/putavatarExternal";
 
 pub struct NSVR<'s> {
     settings: &'s Settings,
