@@ -68,7 +68,7 @@ impl Settings {
         let providers = {
             let providers = ProviderKind::iter().collect::<Vec<_>>();
             let enabled = MultiSelect::new("Select which providers to use:", providers.clone())
-                .with_default(&[0])
+                .with_default(&[0, 1, 2, 3, 4, 5])
                 .with_validator(|list: &[ListOption<&ProviderKind>]| {
                     if list.is_empty() {
                         let message = String::from("You must select at least one.");

@@ -1,6 +1,6 @@
 use std::{sync::Arc, time::Duration};
 
-use cached::proc_macro::once;
+use cached::once;
 use discord_presence::{
     models::{EventData, PartialUser},
     Client,
