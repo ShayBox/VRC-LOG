@@ -71,7 +71,7 @@ Additional contributions welcome, please open an issue, pull request, or join Di
 
 [avtr.zip - Avatar Database]: https://avtr.zip
 
-[NSVR - NekoSune Community]: https://avtr.nekosunevr.co.uk
+[NSVR - NekoSune Community]: https://vrcavatarsearch.nekosunevr.co.uk
 
 [PAW - Puppy's Avatar World]: https://paw.amelia.fun
 
