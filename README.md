@@ -55,7 +55,7 @@ You must manually close it to scan the collected avatars, it will re-open automa
 - [NSVR - NekoSune Community] [^1] - [VRCX](https://vrcavatarsearch.nekosunevr.co.uk/vrcx_search) / [Web](https://vrcavatarsearch.nekosunevr.co.uk)
 - [PAW - Puppy's Avatar World] - [Discord](https://discord.gg/zHhs4nQYxX) / [VRCX](https://paw-api.amelia.fun/vrcx_search) / [Web](https://paw.amelia.fun)
 - [VRCDB - Avatar Search] - [Discord](https://discord.gg/q427ecnUvj) / [VRCX](https://vrcx.vrcdb.com/avatars/Avatar/VRCX) / [Web](https://vrcdb.com) / [World](https://vrchat.com/home/world/wrld_1146f625-5d42-40f5-bfe7-06a7664e2796)
-- [VRCWB - World Balancer] - [VRCX](https://avatarwbvrcxsearch.worldbalancer.com/vrcx_search) / [Web](https://avatar.worldbalancer.com/search.php) / [WB Support](https://support.worldbalancer.com)
+- [VRCWB - World Balancer] - [VRCX](https://avatarwbvrcxsearch.worldbalancer.com/vrcx_search) / [Web](https://avatar.worldbalancer.com/)
 
 #### Unsupported Avatar Database Providers
 
