@@ -60,6 +60,7 @@ default = [
     "cache",
     "avtrdb",
     "avtrzip",
+    "kitsunedb",
     "nsvr",
     "paw",
     "vrcdb",
@@ -71,6 +72,7 @@ default = [
 cache = ["dep:tokio-rusqlite-new"]
 avtrdb = ["dep:reqwest", "discord"]
 avtrzip = ["dep:reqwest"]
+kitsunedb = ["dep:reqwest"]
 nsvr = ["dep:reqwest", "discord"]
 paw = ["dep:reqwest"]
 vrcdb = ["dep:reqwest", "discord"]
