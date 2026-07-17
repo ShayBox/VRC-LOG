@@ -17,7 +17,7 @@ use tracing::level_filters::LevelFilter;
 use tracing_subscriber::{fmt::time::OffsetTime, EnvFilter};
 use vrc_log::{
     provider,
-    provider::{avtrdb::AvtrDBActor, prelude::*, ProviderKind},
+    provider::{avtrdb::AvtrDBActor, kitsunedb::KitsuneDBActor, prelude::*, ProviderKind},
     settings::Settings,
     vrchat::{VRCHAT_AMP_PATH, VRCHAT_LOW_PATH},
     CARGO_PKG_HOMEPAGE,
@@ -104,6 +104,7 @@ async fn main() -> Result<()> {
     let settings: &'static Settings = Box::leak(Box::new(settings));
 
     let (mut avtrdb_actor, avtrdb_sender) = AvtrDBActor::new(settings);
+    let (mut kitsunedb_actor, kitsunedb_sender) = KitsuneDBActor::new(settings);
 
     let providers = settings
         .providers
@@ -122,10 +123,13 @@ async fn main() -> Result<()> {
             ProviderKind::AVTRDB => provider!(AvtrDB::new(avtrdb_sender.clone())),
             #[cfg(feature = "avtrzip")]
             ProviderKind::AVTRZIP => provider!(AvtrZip::default()),
+            #[cfg(feature = "kitsunedb")]
+            ProviderKind::KITSUNEDB => provider!(KitsuneDB::new(kitsunedb_sender.clone())),
         })
         .collect::<Vec<_>>();
 
     let avtrdb_handle = tokio::spawn(async move { avtrdb_actor.run().await });
+    let kitsunedb_handle = tokio::spawn(async move { kitsunedb_actor.run().await });
 
     let handle = tokio::spawn(vrc_log::process_avatars(providers, settings, (tx, rx)));
 
@@ -150,10 +154,12 @@ async fn main() -> Result<()> {
         () = ctrl_c => {
             handle.abort();
             avtrdb_handle.abort();
+            kitsunedb_handle.abort();
         },
         () = terminate => {
             handle.abort();
             avtrdb_handle.abort();
+            kitsunedb_handle.abort();
         },
     }
 
