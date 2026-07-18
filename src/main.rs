@@ -147,20 +147,56 @@ async fn main() -> Result<()> {
             .await;
     };
 
-    #[cfg(not(unix))]
+    // On Windows, closing the console window via the X button, logging off, or
+    // a system shutdown deliver CTRL_CLOSE/LOGOFF/SHUTDOWN_EVENT, not Ctrl+C.
+    // Without catching these too, the vast majority of users (who just click
+    // the X button rather than pressing Ctrl+C) would skip the graceful
+    // shutdown below entirely — Windows kills the process outright, silently
+    // discarding whatever avatars are still buffered in the KitsuneDB/avtrDB
+    // actors even though the local cache already marked them as sent.
+    #[cfg(windows)]
+    let terminate = async {
+        let mut close =
+            signal::windows::ctrl_close().expect("failed to install ctrl-close handler");
+        let mut logoff =
+            signal::windows::ctrl_logoff().expect("failed to install ctrl-logoff handler");
+        let mut shutdown =
+            signal::windows::ctrl_shutdown().expect("failed to install ctrl-shutdown handler");
+
+        tokio::select! {
+            _ = close.recv() => {},
+            _ = logoff.recv() => {},
+            _ = shutdown.recv() => {},
+        }
+    };
+
+    #[cfg(not(any(unix, windows)))]
     let terminate = std::future::pending::<()>();
 
     tokio::select! {
-        () = ctrl_c => {
-            handle.abort();
-            avtrdb_handle.abort();
-            kitsunedb_handle.abort();
-        },
-        () = terminate => {
-            handle.abort();
-            avtrdb_handle.abort();
-            kitsunedb_handle.abort();
-        },
+        () = ctrl_c => {},
+        () = terminate => {},
+    }
+
+    // Graceful shutdown: stop pulling in new avatar IDs, then let each actor
+    // drain and flush whatever it already has buffered before we exit — see
+    // the matching change in provider/kitsunedb.rs and provider/avtrdb.rs.
+    handle.abort();
+    drop(avtrdb_sender);
+    drop(kitsunedb_sender);
+
+    let shutdown_timeout = std::time::Duration::from_secs(90);
+    if tokio::time::timeout(shutdown_timeout, avtrdb_handle)
+        .await
+        .is_err()
+    {
+        error!("avtrDB actor did not finish flushing before shutdown timed out");
+    }
+    if tokio::time::timeout(shutdown_timeout, kitsunedb_handle)
+        .await
+        .is_err()
+    {
+        error!("KitsuneDB actor did not finish flushing before shutdown timed out");
     }
 
     Ok(())
