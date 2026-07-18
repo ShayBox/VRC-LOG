@@ -37,7 +37,7 @@ impl Discord {
     }
 }
 
-#[once(option = true, sync_writes = true)]
+#[once(sync_writes = true)]
 pub fn get_user() -> Option<PartialUser> {
     let discord = Discord::start();
     std::thread::sleep(Duration::from_secs(5));
