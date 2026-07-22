@@ -219,7 +219,7 @@ impl Cache {
     }
 }
 
-// #[cfg(test)]
+#[cfg(test)]
 mod tests {
     use super::Cache;
     /// Helper to create a cache for tests

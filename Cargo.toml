@@ -1,6 +1,6 @@
 [package]
 name = "vrc-log"
-version = "0.15.6"
+version = "0.15.7"
 edition = "2024"
 license = "MIT"
 readme = "README.md"
@@ -16,7 +16,7 @@ repository = "https://github.com/ShayBox/VRC-LOG"
 [dependencies]
 anyhow = "1"
 async-trait = "0.1"
-cached = { version = "3.0.0-rc.1", optional = true }
+cached = { version = "3.0.0-rc.1", optional = true, features = ["async"] }
 chrono = "0.4"
 colored = "3"
 crossterm = { version = "0.29", optional = true }

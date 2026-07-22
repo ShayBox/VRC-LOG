@@ -1,14 +1,14 @@
 use std::time::Duration;
 
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use async_trait::async_trait;
 use reqwest::{Client, StatusCode};
 use serde_json::json;
 
 use crate::{
+    USER_AGENT,
     provider::{Provider, ProviderKind},
     settings::Settings,
-    USER_AGENT,
 };
 
 const URL: &str = "https://search.bs002.de/api/Avatar/putavatar";
@@ -38,7 +38,7 @@ impl Provider for VrcDB<'_> {
         let kind = self.kind();
         let json = json!({
             "id": avatar_id,
-            "userid": self.settings.attribution.get_user_id(),
+            "userid": self.settings.attribution.get_user_id().await,
         });
 
         debug!("[{kind}] Sending {json:#?}");
@@ -61,7 +61,7 @@ impl Provider for VrcDB<'_> {
             StatusCode::NOT_FOUND => true,
             StatusCode::TOO_MANY_REQUESTS => {
                 warn!("[{kind}] 429 Rate Limit, Please Wait 1 Minute...");
-                tokio::time::sleep(Duration::from_secs(60)).await;
+                tokio::time::sleep(Duration::from_mins(1)).await;
                 Box::pin(self.send_avatar_id(avatar_id)).await?
             }
             StatusCode::INTERNAL_SERVER_ERROR => {

@@ -3,11 +3,11 @@ use std::collections::HashMap;
 use anyhow::Result;
 use derive_config::DeriveTomlConfig;
 use inquire::{
-    list_option::ListOption,
-    validator::{ErrorMessage, Validation},
     Confirm,
     MultiSelect,
     Select,
+    list_option::ListOption,
+    validator::{ErrorMessage, Validation},
 };
 use serde::{Deserialize, Serialize};
 use strum::{Display, IntoEnumIterator};
@@ -27,11 +27,12 @@ pub enum Attribution {
 
 impl Attribution {
     #[must_use]
-    pub fn get_user_id(&self) -> String {
+    pub async fn get_user_id(&self) -> String {
         match self {
             Self::Anonymous => DEVELOPER_ID.to_string(),
             Self::DiscordID(id) => id.clone(),
             Self::DiscordRPC(id) => discord::get_user()
+                .await
                 .and_then(|u| u.id)
                 .unwrap_or_else(|| id.clone()),
         }
@@ -56,12 +57,12 @@ impl Settings {
     /// # Panics
     ///
     /// Will panic if Discord user ID doesn't exist.
-    pub fn try_wizard() -> Result<Self> {
+    pub async fn try_wizard() -> Result<Self> {
         let mut attributions = vec![
             Attribution::Anonymous,
             Attribution::DiscordID(String::new()),
         ];
-        if let Some(user) = discord::get_user() {
+        if let Some(user) = discord::get_user().await {
             attributions.insert(1, Attribution::DiscordRPC(user.id.unwrap()));
         }
         let attribution = Select::new("How do you want to be credited?", attributions).prompt()?;

@@ -11,19 +11,22 @@ use derive_config::{ConfigError, DeriveTomlConfig};
 use notify::PollWatcher;
 use strum::IntoEnumIterator;
 use terminal_link::Link;
-use time::{macros::format_description, UtcOffset};
+use time::{UtcOffset, macros::format_description};
 use tokio::signal;
 use tracing::level_filters::LevelFilter;
-use tracing_subscriber::{fmt::time::OffsetTime, EnvFilter};
+use tracing_subscriber::{EnvFilter, fmt::time::OffsetTime};
 use vrc_log::{
+    CARGO_PKG_HOMEPAGE,
     provider,
     provider::{
-        avtrdb::AvtrDBActor, cutedb::CuteDBActor, kitsunedb::KitsuneDBActor, prelude::*,
         ProviderKind,
+        avtrdb::AvtrDBActor,
+        cutedb::CuteDBActor,
+        kitsunedb::KitsuneDBActor,
+        prelude::*,
     },
     settings::Settings,
     vrchat::{VRCHAT_AMP_PATH, VRCHAT_LOW_PATH},
-    CARGO_PKG_HOMEPAGE,
 };
 
 /* Watchers will stop working if they get dropped. */
@@ -65,24 +68,35 @@ async fn main() -> Result<()> {
 
     let mut settings = if force_wizard {
         info!("Setup wizard requested via flag");
-        Settings::try_wizard().expect("Failed to setup wizard")
+        Settings::try_wizard()
+            .await
+            .expect("Failed to setup wizard")
     } else {
-        Settings::load().unwrap_or_else(|error| match error {
-            ConfigError::Io(error) if error.kind() == ErrorKind::NotFound => {
-                info!("Welcome to VRC-LOG! Please follow the setup wizard");
-                Settings::try_wizard().expect("Failed to setup wizard")
-            }
-            error => {
-                error!("There was an error loading the settings: {error}");
-                error!("Most likely an update. Please follow the setup wizard");
-                Settings::try_wizard().expect("Failed to setup wizard")
-            }
-        })
+        match Settings::load() {
+            Ok(settings) => settings,
+            Err(error) => match error {
+                ConfigError::Io(error) if error.kind() == ErrorKind::NotFound => {
+                    info!("Welcome to VRC-LOG! Please follow the setup wizard");
+                    Settings::try_wizard()
+                        .await
+                        .expect("Failed to setup wizard")
+                }
+                error => {
+                    error!("There was an error loading the settings: {error}");
+                    error!("Most likely an update. Please follow the setup wizard");
+                    Settings::try_wizard()
+                        .await
+                        .expect("Failed to setup wizard")
+                }
+            },
+        }
     };
 
     if settings.providers.len() != ProviderKind::iter().count() {
         info!("Additional providers have been added, triggering setup wizard");
-        settings = Settings::try_wizard().expect("Failed to setup wizard");
+        settings = Settings::try_wizard()
+            .await
+            .expect("Failed to setup wizard");
     }
 
     let (tx, rx) = flume::unbounded();

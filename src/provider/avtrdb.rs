@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use colored::{Color, Colorize};
 use flume::{Receiver, Sender};
 use reqwest::{Client, StatusCode, Url};
@@ -10,16 +10,16 @@ use terminal_link::Link;
 use tokio::time::Instant;
 
 use crate::{
+    USER_AGENT,
     provider::{Provider, ProviderKind},
     settings::Settings,
-    USER_AGENT,
 };
 
 const INGEST_BASE_URL: &str = "https://api.avtrdb.com/v3/";
 
 const DISCORD_URL: &str = "https://avtrdb.com/discord";
 
-const FLUSH_INTERVAL: Duration = Duration::from_secs(2 * 60);
+const FLUSH_INTERVAL: Duration = Duration::from_mins(2);
 const FLUSH_THRESHOLD: usize = 100;
 
 const RETRY_LIMIT: usize = 5;
@@ -88,7 +88,7 @@ impl<'s> AvtrDBActor<'s> {
         base_url: String,
         flush_interval: Duration,
     ) -> (Self, Sender<String>) {
-        let (rx, tx) = flume::bounded(capacity);
+        let (tx, rx) = flume::bounded(capacity);
 
         (
             Self {
@@ -96,11 +96,11 @@ impl<'s> AvtrDBActor<'s> {
                 client: Client::default(),
                 buffer: Vec::new(),
                 base_url,
-                channel: tx,
+                channel: rx,
                 flush_interval,
                 last_flush: Instant::now(),
             },
-            rx,
+            tx,
         )
     }
 
@@ -109,7 +109,7 @@ impl<'s> AvtrDBActor<'s> {
     pub async fn flush_buffer(&mut self) -> anyhow::Result<()> {
         let json = json!({
             "avatar_ids":  self.buffer,
-            "attribution": self.settings.attribution.get_user_id(),
+            "attribution": self.settings.attribution.get_user_id().await,
         });
 
         let mut current_try = 0;
@@ -119,7 +119,7 @@ impl<'s> AvtrDBActor<'s> {
             if current_try != 0 {
                 tokio::time::sleep(Duration::from_secs(10)).await;
             }
-            debug!("[{LOG_NAME}] (try {current_try} Sending {json:#?}");
+            debug!("[{LOG_NAME}] (try {current_try}) Sending {json:#?}");
             current_try += 1; // incrementing here to be able to cont later
             let response: reqwest::Response = self
                 .client
@@ -140,7 +140,6 @@ impl<'s> AvtrDBActor<'s> {
                 }
                 _ => {
                     error!("[{LOG_NAME}] Unknown Error: {status} | {text}");
-                    println!("[{LOG_NAME}] Unknown Error: {status} | {text}");
                     false
                 }
             };
@@ -153,14 +152,14 @@ impl<'s> AvtrDBActor<'s> {
         }
 
         if current_try >= RETRY_LIMIT {
-            bail!("[{LOG_NAME}] Failed after {current_try} retires to flush buffer, aborting");
+            bail!("[{LOG_NAME}] Failed after {current_try} retries to flush buffer, aborting");
         }
 
         if let Some(ticket) = ticket {
-            let check_status_url = format!("https://avtrdb.com/check_ticket_status/{ticket}",);
+            let check_status_url = format!("https://avtrdb.com/check_ticket_status/{ticket}");
             let link = Link::new("here", &check_status_url)
                 .to_string()
-                .color(Color::Magenta); // the link is quite long, so i dont display it - can be changed
+                .color(Color::Magenta); // the link is quite long, so I don't display it - can be changed
             info!("[{LOG_NAME}] Check ingestion status {link}");
         } else {
             let discord = Link::new("discord", DISCORD_URL)
