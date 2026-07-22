@@ -2,6 +2,8 @@
 pub use super::avtrdb::AvtrDB;
 #[cfg(feature = "avtrzip")]
 pub use super::avtrzip::AvtrZip;
+#[cfg(feature = "cutedb")]
+pub use super::cutedb::CuteDB;
 #[cfg(feature = "kitsunedb")]
 pub use super::kitsunedb::KitsuneDB;
 #[cfg(feature = "nsvr")]

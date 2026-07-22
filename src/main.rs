@@ -17,7 +17,10 @@ use tracing::level_filters::LevelFilter;
 use tracing_subscriber::{fmt::time::OffsetTime, EnvFilter};
 use vrc_log::{
     provider,
-    provider::{avtrdb::AvtrDBActor, kitsunedb::KitsuneDBActor, prelude::*, ProviderKind},
+    provider::{
+        avtrdb::AvtrDBActor, cutedb::CuteDBActor, kitsunedb::KitsuneDBActor, prelude::*,
+        ProviderKind,
+    },
     settings::Settings,
     vrchat::{VRCHAT_AMP_PATH, VRCHAT_LOW_PATH},
     CARGO_PKG_HOMEPAGE,
@@ -104,6 +107,7 @@ async fn main() -> Result<()> {
     let settings: &'static Settings = Box::leak(Box::new(settings));
 
     let (mut avtrdb_actor, avtrdb_sender) = AvtrDBActor::new(settings);
+    let (mut cutedb_actor, cutedb_sender) = CuteDBActor::new();
     let (mut kitsunedb_actor, kitsunedb_sender) = KitsuneDBActor::new(settings);
 
     let providers = settings
@@ -125,10 +129,13 @@ async fn main() -> Result<()> {
             ProviderKind::AVTRZIP => provider!(AvtrZip::default()),
             #[cfg(feature = "kitsunedb")]
             ProviderKind::KITSUNEDB => provider!(KitsuneDB::new(kitsunedb_sender.clone())),
+            #[cfg(feature = "cutedb")]
+            ProviderKind::CUTEDB => provider!(CuteDB::new(cutedb_sender.clone())),
         })
         .collect::<Vec<_>>();
 
     let avtrdb_handle = tokio::spawn(async move { avtrdb_actor.run().await });
+    let cutedb_handle = tokio::spawn(async move { cutedb_actor.run().await });
     let kitsunedb_handle = tokio::spawn(async move { kitsunedb_actor.run().await });
 
     let handle = tokio::spawn(vrc_log::process_avatars(providers, settings, (tx, rx)));
@@ -183,6 +190,7 @@ async fn main() -> Result<()> {
     // the matching change in provider/kitsunedb.rs and provider/avtrdb.rs.
     handle.abort();
     drop(avtrdb_sender);
+    drop(cutedb_sender);
     drop(kitsunedb_sender);
 
     let shutdown_timeout = std::time::Duration::from_secs(90);
@@ -191,6 +199,12 @@ async fn main() -> Result<()> {
         .is_err()
     {
         error!("avtrDB actor did not finish flushing before shutdown timed out");
+    }
+    if tokio::time::timeout(shutdown_timeout, cutedb_handle)
+        .await
+        .is_err()
+    {
+        error!("CuteDB actor did not finish flushing before shutdown timed out");
     }
     if tokio::time::timeout(shutdown_timeout, kitsunedb_handle)
         .await
