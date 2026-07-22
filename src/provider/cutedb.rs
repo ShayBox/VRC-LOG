@@ -1,19 +1,19 @@
 use std::time::Duration;
 
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use flume::{Receiver, Sender};
 use reqwest::{Client, StatusCode};
 use serde_json::json;
 use tokio::time::Instant;
 
 use crate::{
-    provider::{Provider, ProviderKind},
     USER_AGENT,
+    provider::{Provider, ProviderKind},
 };
 
 const URL: &str = "https://avtr.icu/upload-bulk";
 
-const FLUSH_INTERVAL: Duration = Duration::from_secs(2 * 60);
+const FLUSH_INTERVAL: Duration = Duration::from_mins(2);
 const FLUSH_THRESHOLD: usize = 100;
 
 const RETRY_LIMIT: usize = 5;
@@ -49,6 +49,8 @@ impl CuteDBActor {
         )
     }
 
+    /// # Errors
+    /// Will never return `Err` (as of now)
     pub async fn run(&mut self) -> Result<()> {
         while let Ok(id) = self.channel.recv_async().await {
             self.buffer.push(id);
@@ -72,12 +74,10 @@ impl CuteDBActor {
         Ok(())
     }
 
+    /// # Errors
+    /// Will return `Err` if `Response::send` or `Response::text` fails.
     pub async fn flush_buffer(&mut self) -> Result<()> {
-        let json: Vec<_> = self
-            .buffer
-            .iter()
-            .map(|id| json!({ "id": id }))
-            .collect();
+        let json: Vec<_> = self.buffer.iter().map(|id| json!({ "id": id })).collect();
 
         let mut current_try = 0;
         let mut success = false;

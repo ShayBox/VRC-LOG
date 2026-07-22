@@ -61,7 +61,7 @@ impl Provider for VrcDB<'_> {
             StatusCode::NOT_FOUND => true,
             StatusCode::TOO_MANY_REQUESTS => {
                 warn!("[{kind}] 429 Rate Limit, Please Wait 1 Minute...");
-                tokio::time::sleep(Duration::from_secs(60)).await;
+                tokio::time::sleep(Duration::from_mins(1)).await;
                 Box::pin(self.send_avatar_id(avatar_id)).await?
             }
             StatusCode::INTERNAL_SERVER_ERROR => {

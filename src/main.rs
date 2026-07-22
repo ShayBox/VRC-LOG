@@ -11,19 +11,22 @@ use derive_config::{ConfigError, DeriveTomlConfig};
 use notify::PollWatcher;
 use strum::IntoEnumIterator;
 use terminal_link::Link;
-use time::{macros::format_description, UtcOffset};
+use time::{UtcOffset, macros::format_description};
 use tokio::signal;
 use tracing::level_filters::LevelFilter;
-use tracing_subscriber::{fmt::time::OffsetTime, EnvFilter};
+use tracing_subscriber::{EnvFilter, fmt::time::OffsetTime};
 use vrc_log::{
+    CARGO_PKG_HOMEPAGE,
     provider,
     provider::{
-        avtrdb::AvtrDBActor, cutedb::CuteDBActor, kitsunedb::KitsuneDBActor, prelude::*,
         ProviderKind,
+        avtrdb::AvtrDBActor,
+        cutedb::CuteDBActor,
+        kitsunedb::KitsuneDBActor,
+        prelude::*,
     },
     settings::Settings,
     vrchat::{VRCHAT_AMP_PATH, VRCHAT_LOW_PATH},
-    CARGO_PKG_HOMEPAGE,
 };
 
 /* Watchers will stop working if they get dropped. */

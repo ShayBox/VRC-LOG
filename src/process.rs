@@ -171,7 +171,7 @@ mod tests {
 
         let avatar_ids = vec!["avtr_1".to_string(), "avtr_2".to_string()];
 
-        process_without_cache(providers, avatar_ids).await?;
+        process_without_cache(providers, false, avatar_ids).await?;
 
         let sent_a = sent_a.lock().await;
         let sent_b = sent_b.lock().await;

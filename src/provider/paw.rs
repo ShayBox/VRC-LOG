@@ -60,8 +60,9 @@ impl Provider for Paw {
         let unique = match status {
             StatusCode::OK => {
                 let data = serde_json::from_str::<PawResponse>(&text)?;
-                #[allow(clippy::nonminimal_bool)]
-                !matches!(data.avatar.as_ref(), Some(avatar) if !avatar.is_null() && !(avatar.is_array() && avatar.as_array().unwrap().is_empty()))
+                data.avatar.as_ref().is_none_or(|a| {
+                    a.is_null() || (a.is_array() && a.as_array().is_some_and(Vec::is_empty))
+                })
             }
             StatusCode::TOO_MANY_REQUESTS => {
                 warn!("[{kind}] 429 Rate Limit, Please Wait 10 seconds...");

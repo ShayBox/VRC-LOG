@@ -13,7 +13,7 @@ use std::{
     time::Duration,
 };
 
-use anyhow::{bail, Result};
+use anyhow::Result;
 use chrono::Local;
 use colored::{Color, Colorize};
 use flume::{Receiver, Sender};
@@ -175,7 +175,8 @@ pub async fn process_avatars(
         process_without_cache(providers.clone(), settings.print_scanned, avatar_ids).await?;
     }
 
-    bail!("Channel Closed")
+    debug!("Channel closed, stopping avatar processing");
+    Ok(())
 }
 
 /// # Errors
@@ -200,7 +201,7 @@ pub fn parse_path_env(path: &str) -> Result<PathBuf, Error> {
 }
 
 #[must_use]
-pub fn parse_avatar_ids(path: &PathBuf) -> impl IntoIterator<Item = String> {
+pub fn parse_avatar_ids(path: &Path) -> impl IntoIterator<Item = String> {
     #[allow(clippy::non_std_lazy_statics)]
     static RE: Lazy<Regex> = lazy_regex!(r"avtr_\w{8}-\w{4}-\w{4}-\w{4}-\w{12}");
 
@@ -243,9 +244,10 @@ pub fn print_colorized(avatar_id: impl Display) {
         ]
     });
 
-    let index = *INDEX.read();
-    let color = COLORS[index];
-    *INDEX.write() = (index + 1) % COLORS.len();
+    let mut idx = INDEX.write();
+    let color = COLORS[*idx];
+    *idx = (*idx + 1) % COLORS.len();
+    drop(idx);
 
     let text = format!("vrcx://avatar/{avatar_id}");
     let link = Link::new(&text, &text).to_string().color(color);

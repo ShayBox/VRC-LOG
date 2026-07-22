@@ -1,14 +1,14 @@
 use std::time::Duration;
 
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use async_trait::async_trait;
 use reqwest::{Client, StatusCode};
 use serde_json::json;
 
 use crate::{
+    USER_AGENT,
     provider::{Provider, ProviderKind},
     settings::Settings,
-    USER_AGENT,
 };
 
 const URL: &str = "https://api-avatar.nekosunevr.co.uk/v1/vrchat/avatars/store/putavatarExternal";
@@ -66,11 +66,11 @@ impl Provider for NSVR<'_> {
         debug!("[{kind}] {status} | {text}");
 
         let unique = match status {
-            StatusCode::OK => false,
+            StatusCode::SERVICE_UNAVAILABLE | StatusCode::OK => false,
             StatusCode::NOT_FOUND => true,
             StatusCode::TOO_MANY_REQUESTS => {
                 warn!("[{kind}] 429 Rate Limit, Please Wait 1 Minute...");
-                tokio::time::sleep(Duration::from_secs(60)).await;
+                tokio::time::sleep(Duration::from_mins(1)).await;
                 Box::pin(self.send_avatar_id(avatar_id)).await?
             }
             _ => bail!("[{kind}] {status} | {text}"),
