@@ -40,9 +40,7 @@ impl Discord {
 #[once(sync_writes = true)]
 pub fn get_user() -> Option<PartialUser> {
     let discord = Discord::start();
-    tokio::runtime::Handle::current().block_on(async {
-        tokio::time::sleep(Duration::from_secs(5)).await;
-    });
+    std::thread::sleep(Duration::from_secs(5));
     discord.client.shutdown().ok()?;
 
     if let Some(user) = discord.user.lock().as_ref() {
