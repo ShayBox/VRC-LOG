@@ -157,7 +157,11 @@ mod tests {
 
         async fn send_avatar_id(&self, avatar_id: &str) -> Result<bool> {
             self.sent.lock().await.push(avatar_id.to_string());
-            Ok(self.succeed)
+            if self.succeed {
+                Ok(true)
+            } else {
+                anyhow::bail!("mock provider failure")
+            }
         }
     }
 
