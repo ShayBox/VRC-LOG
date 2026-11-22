@@ -57,11 +57,8 @@ impl<'s> AvtrDBActor<'s> {
             }
         }
 
-        // The channel only closes once every sender has been dropped, which is
-        // how the shutdown path in main.rs signals "no more avatars are coming."
-        // Without this, anything still sitting in the buffer here (below the
-        // flush threshold/interval) would be silently discarded on exit, even
-        // though the local cache already marked those IDs as sent.
+        // When the sender channel is dropped, the while loop above will end.
+        // At that point the buffer may not be empty, we check and make sure its empty to prevent data loss
         if !self.buffer.is_empty()
             && let Err(err) = self.flush_buffer().await
         {
