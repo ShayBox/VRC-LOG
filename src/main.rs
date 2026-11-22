@@ -1,7 +1,7 @@
 #[macro_use]
 extern crate tracing;
 
-use std::{io::ErrorKind, sync::OnceLock};
+use std::{ffi::OsStr, io::ErrorKind, path::Path, sync::OnceLock};
 
 use anyhow::Result;
 use chrono::{Local, Offset};
@@ -101,8 +101,15 @@ async fn main() -> Result<()> {
 
     let (tx, rx) = flume::unbounded();
     let _ = WATCHERS.set(vec![
-        vrc_log::watch(tx.clone(), VRCHAT_AMP_PATH.as_path(), 100)?,
-        vrc_log::watch(tx.clone(), VRCHAT_LOW_PATH.as_path(), 1_000)?,
+        vrc_log::watch(&tx, VRCHAT_AMP_PATH.as_path(), 100, |p: &Path| {
+            p.file_name()
+                .is_some_and(|file_name| file_name == "amplitude.cache")
+        })?,
+        vrc_log::watch(&tx, VRCHAT_LOW_PATH.as_path(), 1_000, |p: &Path| {
+            p.extension()
+                .and_then(OsStr::to_str)
+                .is_some_and(|ext| ["txt", "log", "csv"].contains(&ext))
+        })?,
     ]);
 
     #[cfg(windows)]

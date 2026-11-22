@@ -3,9 +3,8 @@ extern crate tracing;
 
 use std::{
     collections::HashSet,
-    ffi::OsStr,
     fmt::Display,
-    fs::{create_dir_all, File},
+    fs::{File, create_dir_all},
     io::{BufRead, BufReader, Error},
     path::{Path, PathBuf},
     process::{Command, Stdio},
@@ -17,7 +16,7 @@ use anyhow::Result;
 use chrono::Local;
 use colored::{Color, Colorize};
 use flume::{Receiver, Sender};
-use lazy_regex::{lazy_regex, regex_replace_all, Lazy, Regex};
+use lazy_regex::{Lazy, Regex, lazy_regex, regex_replace_all};
 use notify::{Config, Event, PollWatcher, RecursiveMode, Watcher};
 use parking_lot::RwLock;
 use terminal_link::Link;
@@ -47,6 +46,8 @@ pub const USER_AGENT: &str = concat!(
     " shaybox@shaybox.com"
 );
 
+const MAX_TIME_SINCE_MODIFY: Duration = Duration::from_hours(48); // 2 days
+
 #[must_use]
 pub fn get_local_time() -> String {
     Local::now().format("%Y-%m-%d %H:%M:%S").to_string()
@@ -65,49 +66,58 @@ pub async fn check_for_updates() -> reqwest::Result<bool> {
     Ok(false)
 }
 
+fn process_paths(
+    filter: fn(&Path) -> bool,
+    paths: impl IntoIterator<Item = PathBuf>,
+    tx: &Sender<PathBuf>,
+) {
+    for p in paths
+        .into_iter()
+        .filter(|p| p.exists() && !p.is_dir() && filter(p))
+    {
+        if let Ok(meta) = p.metadata()
+            && let Ok(modified) = meta.modified()
+        {
+            let time_since_last_modified = modified.elapsed().unwrap_or_default();
+            if time_since_last_modified < MAX_TIME_SINCE_MODIFY {
+                let _ = tx.send(p);
+            }
+        } else {
+            debug!("did not process path: {:?}", p);
+        }
+    }
+}
+
 /// # Errors
 /// Will return `Err` if `PollWatcher::watch` errors
 pub fn watch<P: AsRef<Path>>(
-    tx: Sender<PathBuf>,
+    tx: &Sender<PathBuf>,
     path: P,
     millis: u64,
+    filter: fn(&Path) -> bool,
 ) -> notify::Result<PollWatcher> {
     let path = path.as_ref();
     debug!("Watching {path:?}");
 
-    let tx_clone = tx.clone();
+    let watch_tx = tx.clone();
+    let scan_tx = tx.clone();
+
     let mut watcher = PollWatcher::with_initial_scan(
-        move |watch_event: notify::Result<Event>| {
-            if let Ok(event) = watch_event {
-                for path in event.paths {
-                    if let Some(extension) = path.extension().and_then(OsStr::to_str)
-                        && ["csv", "log", "txt"].contains(&extension)
-                    {
-                        let _ = tx.send(path.clone());
-                    }
-                    if let Some(filename) = path.file_name().and_then(OsStr::to_str)
-                        && filename == "amplitude.cache"
-                    {
-                        let _ = tx.send(path);
-                    }
-                }
+        move |watch_event: notify::Result<Event>| match watch_event {
+            Ok(event) => {
+                process_paths(filter, event.paths, &watch_tx);
+            }
+            Err(err) => {
+                error!("failed to process watch event: {:?}", err);
             }
         },
         Config::default()
             .with_compare_contents(true)
             .with_poll_interval(Duration::from_millis(millis)),
-        move |scan_event: notify::Result<PathBuf>| {
-            if let Ok(path) = scan_event {
-                if let Some(extension) = path.extension().and_then(OsStr::to_str)
-                    && ["csv", "log", "txt"].contains(&extension)
-                {
-                    let _ = tx_clone.send(path.clone());
-                }
-                if let Some(filename) = path.file_name().and_then(OsStr::to_str)
-                    && filename == "amplitude.cache"
-                {
-                    let _ = tx_clone.send(path);
-                }
+        move |scan_event: notify::Result<PathBuf>| match scan_event {
+            Ok(path) => process_paths(filter, vec![path], &scan_tx),
+            Err(err) => {
+                error!("failed to process scan event: {:?}", err);
             }
         },
     )?;
@@ -151,7 +161,19 @@ pub async fn process_avatars(
     let cache = cache::Cache::new().await?;
 
     while let Ok(path) = rx.recv_async().await {
-        let avatar_ids = parse_avatar_ids(&path);
+        if !path.is_file() {
+            continue;
+        }
+        let avatar_ids = match parse_avatar_ids(&path) {
+            Ok(ids) => ids,
+            Err(error) => {
+                error!(
+                    "failed to parse avatar ids for path {:?} Error: {:?}",
+                    path, error
+                );
+                continue;
+            }
+        };
 
         // Clear amplitude file after reading if enabled and it's an amplitude file
         if settings.clear_amplitude
@@ -200,20 +222,21 @@ pub fn parse_path_env(path: &str) -> Result<PathBuf, Error> {
     std::fs::canonicalize(path)
 }
 
-#[must_use]
-pub fn parse_avatar_ids(path: &Path) -> impl IntoIterator<Item = String> {
+/// # Errors
+///
+/// Returns an [`std::io::Error`] if
+/// opening `path` or reading from the underlying file fails.
+pub fn parse_avatar_ids(path: &Path) -> Result<impl IntoIterator<Item = String>> {
     #[allow(clippy::non_std_lazy_statics)]
     static RE: Lazy<Regex> = lazy_regex!(r"avtr_\w{8}-\w{4}-\w{4}-\w{4}-\w{12}");
 
-    let Ok(file) = File::open(path) else {
-        return HashSet::new(); // Directory
-    };
+    let file = File::open(path)?;
 
     let mut reader = BufReader::new(file);
     let mut avatar_ids = HashSet::new(); // Filter out duplicates
     let mut buf = Vec::new();
 
-    while reader.read_until(b'\n', &mut buf).unwrap_or(0) > 0 {
+    while reader.read_until(b'\n', &mut buf)? > 0 {
         let line = String::from_utf8_lossy(&buf);
         for mat in RE.find_iter(&line) {
             avatar_ids.insert(mat.as_str().to_string());
@@ -221,7 +244,7 @@ pub fn parse_avatar_ids(path: &Path) -> impl IntoIterator<Item = String> {
         buf.clear();
     }
 
-    avatar_ids
+    Ok(avatar_ids)
 }
 
 /// # Print with colorized rainbow rows for separation
@@ -252,4 +275,110 @@ pub fn print_colorized(avatar_id: impl Display) {
     let text = format!("vrcx://avatar/{avatar_id}");
     let link = Link::new(&text, &text).to_string().color(color);
     info!("{link}");
+}
+
+// These tests where generated by Claude Opus 5.5
+#[cfg(test)]
+mod tests {
+    use std::time::SystemTime;
+
+    use tempfile::TempDir;
+
+    use super::*;
+
+    const NONE: [PathBuf; 0] = [];
+    const HOUR: Duration = Duration::from_hours(1);
+
+    /// Creates `dir/name` with its modified time set `age` in the past.
+    fn file_with_age(dir: &Path, name: &str, age: Duration) -> PathBuf {
+        let path = dir.join(name);
+        let file = File::create(&path).unwrap();
+        file.set_modified(SystemTime::now() - age).unwrap();
+        path
+    }
+
+    /// Runs `process_paths` and returns everything it sent.
+    fn run(filter: fn(&Path) -> bool, paths: Vec<PathBuf>) -> Vec<PathBuf> {
+        let (tx, rx) = flume::unbounded();
+        process_paths(filter, paths, &tx);
+        drop(tx);
+        rx.drain().collect()
+    }
+
+    fn allow_all(_: &Path) -> bool {
+        true
+    }
+
+    fn is_txt(p: &Path) -> bool {
+        p.extension().is_some_and(|e| e == "txt")
+    }
+
+    #[test]
+    fn sends_recent_file() {
+        let dir = TempDir::new().unwrap();
+        let file = file_with_age(dir.path(), "a.txt", Duration::ZERO);
+        assert_eq!(run(allow_all, vec![file.clone()]), vec![file]);
+    }
+
+    #[test]
+    fn skips_file_older_than_max_age() {
+        let dir = TempDir::new().unwrap();
+        let file = file_with_age(dir.path(), "old.txt", MAX_TIME_SINCE_MODIFY + HOUR);
+        assert_eq!(run(allow_all, vec![file]), NONE);
+    }
+
+    #[test]
+    fn sends_file_just_under_max_age() {
+        let dir = TempDir::new().unwrap();
+        let age = MAX_TIME_SINCE_MODIFY.saturating_sub(HOUR);
+        let file = file_with_age(dir.path(), "edge.txt", age);
+        assert_eq!(run(allow_all, vec![file.clone()]), vec![file]);
+    }
+
+    #[test]
+    fn skips_directories() {
+        let dir = TempDir::new().unwrap();
+        assert_eq!(run(allow_all, vec![dir.path().to_path_buf()]), NONE);
+    }
+
+    #[test]
+    fn skips_missing_paths() {
+        let dir = TempDir::new().unwrap();
+        assert_eq!(run(allow_all, vec![dir.path().join("nope.txt")]), NONE);
+    }
+
+    #[test]
+    fn skips_paths_rejected_by_filter() {
+        let dir = TempDir::new().unwrap();
+        let file = file_with_age(dir.path(), "a.log", Duration::ZERO);
+        assert_eq!(run(is_txt, vec![file]), NONE);
+    }
+
+    #[test]
+    fn filters_mixed_input_and_keeps_order() {
+        let dir = TempDir::new().unwrap();
+        let first = file_with_age(dir.path(), "1.txt", Duration::ZERO);
+        let wrong_ext = file_with_age(dir.path(), "2.log", Duration::ZERO);
+        let stale = file_with_age(dir.path(), "3.txt", MAX_TIME_SINCE_MODIFY + HOUR);
+        let second = file_with_age(dir.path(), "4.txt", HOUR);
+        let missing = dir.path().join("5.txt");
+
+        let sent = run(
+            is_txt,
+            vec![
+                first.clone(),
+                wrong_ext,
+                stale,
+                dir.path().to_path_buf(),
+                second.clone(),
+                missing,
+            ],
+        );
+        assert_eq!(sent, vec![first, second]);
+    }
+
+    #[test]
+    fn empty_input_sends_nothing() {
+        assert_eq!(run(allow_all, Vec::new()), NONE);
+    }
 }
